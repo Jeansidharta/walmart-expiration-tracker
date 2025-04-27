@@ -1,0 +1,76 @@
+import { FC } from "react";
+import PlantSvg from "../../assets/plant.svg?raw";
+
+import style from "./styles.module.css";
+import { useUncontrolled } from "@mantine/hooks";
+
+export type Point = { x: number; y: number };
+export type BoundingBox = { topLeft: Point; bottomRight: Point };
+export type Dot = Point & {
+	radius?: number;
+	color?: string;
+};
+
+// Look for the shelf position that was clicked
+function findLabel(elem: HTMLElement): string | null {
+	let node: HTMLElement | null = elem;
+	while (node && node.nodeName !== "svg") {
+		const attr = node.getAttribute("inkscape:label");
+		if (attr?.match(/\w\d{1,2}/)) return attr;
+		node = node.parentElement;
+	}
+	return null;
+}
+
+export const Map: FC<{
+	onChange?: (isle: string | null) => void;
+	shelvesToHighlight?: string[];
+	selectedShelf?: string | null;
+}> = ({ onChange, selectedShelf, shelvesToHighlight = [] }) => {
+	const [_selectedShelf, handleChange] = useUncontrolled({
+		value: selectedShelf,
+		finalValue: null,
+		onChange,
+	});
+
+	function handleClick(event: React.MouseEvent<SVGSVGElement, MouseEvent>) {
+		if (!handleChange) return;
+		const label = findLabel(event.target as unknown as HTMLElement);
+		if (label) {
+			if (label === _selectedShelf) handleChange(null);
+			else handleChange(label);
+		}
+	}
+
+	const selector =
+		_selectedShelf &&
+		`[inkscape\\:label="${_selectedShelf}"] { fill: var(--color-primary) !important; }`;
+	const highlight = `${shelvesToHighlight.map((shelf) => `[inkscape\\:label="${shelf}"] { fill: var(--color-secondary) !important; }`).join("\n")}`;
+
+	return (
+		<div
+			style={{
+				width: "100%",
+				overflowX: "auto",
+			}}
+		>
+			<div style={{ width: "max-content" }}>
+				<svg
+					onClick={handleClick}
+					viewBox="1219.169 1291.454 788.339 168.920"
+					width="100%"
+					height="500px"
+					className={style.map}
+					dangerouslySetInnerHTML={{ __html: PlantSvg }}
+				/>
+				<style>
+					.{style.map} {"{"}
+					{highlight}
+					{"\n"}
+					{selector}
+					{"}"}
+				</style>
+			</div>
+		</div>
+	);
+};

@@ -1,0 +1,10 @@
+.map {
+	& g[inkscape\:label="Route"] {
+		visibility: hidden;
+	}
+
+	& [is-position="true"] {
+		fill: gray !important;
+		stroke: var(--color-secondary) !important;
+	}
+}
