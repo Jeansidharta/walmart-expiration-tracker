@@ -49,7 +49,7 @@ pub fn main() {
 
   wisp.configure_logger()
 
-  let port = 8080
+  let port = 4030
 
   let assert Ok(_) =
     wisp_mist.handler(request_handler(_, conn), "UNUSED_FOR_NOW")
