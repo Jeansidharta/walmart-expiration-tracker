@@ -1,5 +1,5 @@
 import { FC, useEffect } from "react";
-import { Button, Modal, TextInput } from "@mantine/core";
+import { Button, Modal, Stack, TextInput } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 import { WebcamCapture } from "../camera";
 import { useForm } from "@mantine/form";
@@ -7,6 +7,8 @@ import { useCreateProduct } from "../../api";
 import { LoadingButton } from "../loading-button";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { useSWRConfig } from "swr";
+import { SelectProduct } from "../upc-input";
 
 type Value = {
 	image: string;
@@ -22,25 +24,30 @@ export const NewProductButton: FC<{
 	const [isModalOpen, { open: openModal, close: closeModal }] =
 		useDisclosure(false);
 	const { createProduct, isLoading, error } = useCreateProduct();
+	const { mutate } = useSWRConfig();
 
 	const form = useForm<Value>({
 		initialValues: { barcode, image: "", name: "" },
 		validate: {
 			image: (v) => (v ? null : "You must take a picture"),
+			barcode: (v) => (v ? null : "You must provide a barcode"),
 		},
 	});
 
 	useEffect(() => {
-		if (form.values.barcode !== barcode) form.setFieldValue("barcode", barcode);
+		if (barcode && form.values.barcode !== barcode)
+			form.setFieldValue("barcode", barcode);
 	}, [barcode, form]);
 
 	async function handleSubmit(values: Value) {
-		await createProduct(values);
+		const newProduct = await createProduct(values);
 		notifications.show({
 			title: "Success!",
 			message: "Product created successfuly!",
 			color: "green",
 		});
+		mutate(`product/${values.barcode}`, newProduct);
+		form.reset();
 		closeModal();
 	}
 
@@ -56,23 +63,28 @@ export const NewProductButton: FC<{
 			</Button>
 			<Modal opened={isModalOpen} onClose={closeModal} title="Create Product">
 				{isModalOpen && (
-					<form onSubmit={form.onSubmit(handleSubmit)}>
-						<WebcamCapture {...form.getInputProps("image")} />
-						<TextInput
-							disabled={Boolean(barcode)}
-							label="Product UPC"
-							{...form.getInputProps("barcode")}
-						/>
-						<TextInput label="Product Name" {...form.getInputProps("name")} />
-						<LoadingButton
-							mt="md"
-							type="submit"
-							icon={<IconPlus style={{ width: "60%", height: "60%" }} />}
-							loading={isLoading}
-							error={error?.message}
-						>
-							Create
-						</LoadingButton>
+					<form
+						onSubmit={(e) => {
+							e.stopPropagation();
+							form.onSubmit(handleSubmit)(e);
+						}}
+					>
+						<Stack>
+							<WebcamCapture {...form.getInputProps("image")} />
+							<SelectProduct
+								disabled={Boolean(barcode)}
+								{...form.getInputProps("barcode")}
+							/>
+							<TextInput label="Product Name" {...form.getInputProps("name")} />
+							<LoadingButton
+								icon={<IconPlus style={{ width: "60%", height: "60%" }} />}
+								type="submit"
+								loading={isLoading}
+								error={error?.message}
+							>
+								Create
+							</LoadingButton>
+						</Stack>
 					</form>
 				)}
 			</Modal>

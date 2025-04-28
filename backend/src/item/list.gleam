@@ -3,7 +3,6 @@ import gleam/dynamic/decode
 import gleam/json
 import gleam/list
 import gleam/option
-import gleam/string
 import models/item
 import models/product
 import server_response
@@ -73,13 +72,11 @@ pub fn list(
       True -> ""
       False -> " WHERE " <> filters
     }
-    <> " ORDER BY expires_at DESC;"
-
-  wisp.log_info(query)
-  wisp.log_info(
-    list.map(queries, fn(query) { query.0 <> "=" <> query.1 })
-    |> string.join("&"),
-  )
+    <> case expired {
+      option.Some(True) -> " ORDER BY expires_at DESC;"
+      option.Some(False) -> " ORDER BY expires_at ASC;"
+      option.None -> ";"
+    }
 
   use items <-
     sqlight.query(query, conn, [], decode())

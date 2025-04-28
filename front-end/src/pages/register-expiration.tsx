@@ -65,7 +65,12 @@ export function RegisterExpirationPage() {
 	return (
 		<Stack>
 			<Title mb="lg">Expiration tracker</Title>
-			<form onSubmit={form.onSubmit(handleSubmit)}>
+			<form
+				onSubmit={(e) => {
+					e.stopPropagation();
+					form.onSubmit(handleSubmit)(e);
+				}}
+			>
 				<Stack gap={8}>
 					<SelectProduct {...form.getInputProps("productUpc")} />
 					{isLoadingProduct ? (
@@ -84,7 +89,7 @@ export function RegisterExpirationPage() {
 									: "none",
 						}}
 					>
-						<NewProductButton barcode={productUpc ?? ""} />
+						Product not found. <NewProductButton barcode={productUpc ?? ""} />
 					</div>
 					<div
 						style={{

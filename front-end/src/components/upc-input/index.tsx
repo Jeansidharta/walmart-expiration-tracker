@@ -1,37 +1,62 @@
 import { FC } from "react";
-import { Flex, NumberInput } from "@mantine/core";
-import { OpenCameraIcon } from "./open-camera-icon";
-import { OpenProductsListIcon } from "./open-products-list-icon";
-import { useUncontrolled } from "@mantine/hooks";
+import { useDisclosure, useUncontrolled } from "@mantine/hooks";
+import { ActionIcon, Modal, TextInput } from "@mantine/core";
+import { IconCamera } from "@tabler/icons-react";
+import { QrcodeReader } from "../qrcode-scanner";
+
+const UPC_A_LEN = 11;
+const UPC_E_LEN = 8;
 
 export const SelectProduct: FC<{
 	onChange?: (upc: string | null) => void;
 	value?: string;
 	error?: string | null;
-}> = ({ onChange = () => { }, value, error }) => {
+	disabled?: boolean;
+}> = ({ onChange = () => { }, value, error, disabled = false }) => {
+	const [isModalOpen, { open, close }] = useDisclosure(false);
 	const [upc, handleChange] = useUncontrolled({
 		value,
 		finalValue: "",
+		defaultValue: "",
 		onChange: (upc) => {
-			const importantUpcPart = upc.length >= 11 ? upc.substring(0, 11) : null;
-			if (importantUpcPart) onChange(importantUpcPart);
+			if (upc.length == UPC_E_LEN || upc.length == UPC_A_LEN) onChange(upc);
 			else onChange(null);
 		},
 	});
 
 	return (
-		<NumberInput
-			error={error}
-			value={upc ?? undefined}
-			maxLength={11}
-			onChange={(e) => handleChange(e.toString())}
-			label="Product UPC"
-			rightSection={
-				<Flex gap="md" right={8} pos="absolute">
-					<OpenCameraIcon onSelect={handleChange} />
-					<OpenProductsListIcon />
-				</Flex>
-			}
-		/>
+		<>
+			<TextInput
+				error={error}
+				value={upc}
+				inputMode="numeric"
+				onChange={(e) => {
+					const str = e.target.value;
+					const onlyNumbers = str.replace(/\D/g, "");
+					const withMaxLen =
+						onlyNumbers.length >= UPC_A_LEN
+							? onlyNumbers.substring(0, 11)
+							: onlyNumbers;
+					handleChange(withMaxLen);
+				}}
+				disabled={disabled}
+				label="Product UPC"
+				rightSection={
+					<ActionIcon onClick={open} variant="filled" aria-label="Settings">
+						<IconCamera style={{ width: "70%", height: "70%" }} stroke={1.5} />
+					</ActionIcon>
+				}
+			/>
+			{isModalOpen && (
+				<Modal opened onClose={close} title="Scan product barcode">
+					<QrcodeReader
+						onRead={(barcode) => {
+							close();
+							handleChange(barcode);
+						}}
+					/>
+				</Modal>
+			)}
+		</>
 	);
 };
