@@ -64,7 +64,7 @@ export function RegisterExpirationPage() {
 
 	return (
 		<Stack>
-			<Title mb="lg">Expiration tracker</Title>
+			<Title mb="lg">New Expiration</Title>
 			<form
 				onSubmit={(e) => {
 					e.stopPropagation();
