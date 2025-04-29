@@ -34,7 +34,7 @@ export const SelectProduct: FC<{
 					const str = e.target.value;
 					const onlyNumbers = str.replace(/\D/g, "");
 					const withMaxLen =
-						onlyNumbers.length >= UPC_A_LEN
+						onlyNumbers.length > UPC_A_LEN
 							? onlyNumbers.substring(0, 11)
 							: onlyNumbers;
 					handleChange(withMaxLen);
@@ -51,8 +51,9 @@ export const SelectProduct: FC<{
 				<Modal opened onClose={close} title="Scan product barcode">
 					<QrcodeReader
 						onRead={(barcode) => {
+			const upc = barcode.length > UPC_A_LEN ? barcode.substring(0, 11) : barcode;
 							close();
-							handleChange(barcode);
+							handleChange(upc);
 						}}
 					/>
 				</Modal>
