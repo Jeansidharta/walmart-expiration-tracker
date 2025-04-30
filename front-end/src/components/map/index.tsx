@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useEffect, useRef } from "react";
 import PlantSvg from "../../assets/plant.svg?raw";
 
 import style from "./styles.module.css";
@@ -27,6 +27,7 @@ export const Map: FC<{
 	shelvesToHighlight?: string[];
 	selectedShelf?: string | null;
 }> = ({ onChange, selectedShelf, shelvesToHighlight = [] }) => {
+	const rootRef = useRef<HTMLDivElement | null>(null);
 	const [_selectedShelf, handleChange] = useUncontrolled({
 		value: selectedShelf,
 		finalValue: null,
@@ -47,12 +48,26 @@ export const Map: FC<{
 		`[inkscape\\:label="${_selectedShelf}"] { fill: var(--color-primary) !important; }`;
 	const highlight = `${shelvesToHighlight.map((shelf) => `[inkscape\\:label="${shelf}"] { fill: var(--color-secondary) !important; }`).join("\n")}`;
 
+	useEffect(() => {
+		const parentDiv = rootRef.current;
+		if (!parentDiv) return;
+		if (!_selectedShelf) return;
+
+		const selectedElement = parentDiv.querySelector(
+			`[inkscape\\:label="${_selectedShelf}"]`,
+		);
+		if (!selectedElement) return;
+		selectedElement.scrollIntoView({ inline: "center" });
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	return (
 		<div
 			style={{
 				width: "100%",
 				overflowX: "auto",
 			}}
+			ref={rootRef}
 		>
 			<div style={{ width: "max-content" }}>
 				<svg
