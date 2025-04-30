@@ -23,27 +23,6 @@ const router = createBrowserRouter([
 					{
 						index: true,
 						Component: HomePage,
-						loader: async ({ request }) => {
-							const url = new URL(request.url);
-							url.searchParams.set(
-								"expired",
-								url.searchParams.get("expired") ?? "false",
-							);
-							const response: ServerResponse<{
-								items: Item[];
-								products: Record<string, Product>;
-							}> = await fetch(`${BASE_URL}/item${url.search}`).then((r) =>
-								r.json(),
-							);
-							const data = response.data;
-
-							const items = data.items.map((item) => ({
-								item,
-								product: data.products[item.product_barcode]!,
-							}));
-							console.log(data, items);
-							return items;
-						},
 					},
 					{
 						path: "product",
