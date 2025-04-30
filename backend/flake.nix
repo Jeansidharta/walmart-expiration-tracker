@@ -13,14 +13,21 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        runtimeDeps = [
+          pkgs.gleam
+          pkgs.rebar3
+          pkgs.erlang
+        ];
       in
       {
+
+        packages.default = pkgs.writeShellApplication {
+          name = "expiration-tracker-backend";
+          runtimeInputs = runtimeDeps;
+          text = "gleam run";
+        };
         devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            gleam
-            rebar3
-            erlang
-          ];
+          buildInputs = runtimeDeps;
         };
       }
     );
