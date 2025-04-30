@@ -27,12 +27,6 @@ const router = createBrowserRouter([
 					{
 						path: "product",
 						Component: ProductsPage,
-						loader: async () => {
-							const items: ServerResponse<Product[]> = await fetch(
-								`${BASE_URL}/product`,
-							).then((r) => r.json());
-							return items.data;
-						},
 					},
 				],
 			},
