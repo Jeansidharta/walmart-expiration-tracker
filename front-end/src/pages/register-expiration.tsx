@@ -1,6 +1,6 @@
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
-import { Loader, Stack, Title, Text, Card } from "@mantine/core";
+import { Loader, Stack, Title, Text, Card, Badge, Group } from "@mantine/core";
 import { SelectProduct } from "../components/upc-input";
 import { NewProductButton } from "../components/new-product-button";
 import useSWR from "swr";
@@ -12,6 +12,8 @@ import { LoadingButton } from "../components/loading-button";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { ImageExpandable } from "../components/image-expandable";
+import { formatExpirationDate } from "../utils/format-date";
+import { useMemo } from "react";
 
 type Data = { productUpc: string; selectedShelf: string; expirationDate: Date };
 
@@ -29,12 +31,18 @@ export function RegisterExpirationPage() {
 			expirationDate: (v) =>
 				v.getTime() <= Date.now()
 					? "The expiration date should be after the current date"
-					: null,
+					: datesRegistered?.find((exp) => exp === formatExpirationDate(v))
+						? "This date has already been registered"
+						: null,
 		},
 	});
 	const { productUpc } = form.values;
 
-	const { data, isLoading: isLoadingProduct } = useSWR<{
+	const {
+		data,
+		isLoading: isLoadingProduct,
+		mutate,
+	} = useSWR<{
 		product: Product;
 		items: Item[];
 	}>(productUpc && `product/${productUpc}`, {
@@ -55,12 +63,22 @@ export function RegisterExpirationPage() {
 			location: selectedShelf,
 			product_barcode: productUpc,
 		});
+		mutate();
 		notifications.show({
 			title: "Success!",
 			message: "Successfuly created expiration",
 			color: "green",
 		});
 	}
+
+	const datesRegistered: string[] | undefined = useMemo(
+		() =>
+			data?.items
+				.filter((item) => item.location === form.values.selectedShelf)
+				.sort((left, right) => left.expires_at - right.expires_at)
+				.map((item) => formatExpirationDate(new Date(item.expires_at))) ?? [],
+		[data?.items, form.values.selectedShelf],
+	);
 
 	return (
 		<Stack>
@@ -103,6 +121,21 @@ export function RegisterExpirationPage() {
 							shelvesToHighlight={data?.items.map((item) => item.location)}
 							{...form.getInputProps("selectedShelf")}
 						/>
+						<Group
+							mt={16}
+							align="center"
+							gap={4}
+							style={{
+								visibility: datesRegistered.length === 0 ? "hidden" : "unset",
+							}}
+						>
+							<Text c="dimmed">Dates registered:</Text>
+							{datesRegistered.map((expiration) => (
+								<Badge color="gray" key={expiration}>
+									{expiration}
+								</Badge>
+							))}
+						</Group>
 						<DateInput
 							label="Expiration Date"
 							{...form.getInputProps("expirationDate")}

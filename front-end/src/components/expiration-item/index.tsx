@@ -4,14 +4,7 @@ import { Group, Paper, Text, Stack } from "@mantine/core";
 import sAgo from "s-ago";
 import { ImageExpandable } from "../image-expandable";
 import { MapModalButton } from "../map-modal-button";
-
-function formatDate(date: Date) {
-	const year = date.getFullYear().toString().padStart(4, "0");
-	const month = (date.getMonth() + 1).toString().padStart(2, "0");
-	const day =
-		date.getDate() === 1 ? null : date.getDate().toString().padStart(2, "0");
-	return `${month}/${day ? `${day}/` : ""}${year}`;
-}
+import { formatExpirationDate } from "../../utils/format-date";
 
 export const ExpirationItem: FC<{ expirationItem: Item; product: Product }> = ({
 	expirationItem,
@@ -32,7 +25,7 @@ export const ExpirationItem: FC<{ expirationItem: Item; product: Product }> = ({
 					</Group>
 					<Group>
 						<Text>Expires {sAgo(expiration)}</Text>
-						<Text c="dimmed">({formatDate(expiration)})</Text>
+						<Text c="dimmed">({formatExpirationDate(expiration)})</Text>
 					</Group>
 				</Stack>
 			</Group>
