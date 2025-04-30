@@ -10,7 +10,7 @@ async function parseResponse<T = unknown>(res: Response) {
 
 // const sleep = (time: number) => new Promise((res) => setTimeout(res, time));
 
-export const usePost = <Body, Response>() => {
+export const usePost = <Body, Response>(method: string = "POST") => {
 	const [state, setState] = useState<{
 		data: Response | null;
 		isLoading: boolean;
@@ -24,7 +24,7 @@ export const usePost = <Body, Response>() => {
 			try {
 				setState({ data: null, isLoading: true, error: null });
 				const res = await fetch(`${BASE_URL}/${path}`, {
-					method: "POST",
+					method,
 					body: JSON.stringify(body),
 					headers: { "Content-Type": "application/json" },
 				});
@@ -48,4 +48,11 @@ export const useCreateProduct = () => {
 	type Body = Omit<Product, "created_at">;
 	const { post, ...a } = usePost<Body, Product>();
 	return { createProduct: (body: Body) => post("product", body), ...a };
+};
+export const useDeleteExpiration = () => {
+	const { post, ...a } = usePost<object, Item>("DELETE");
+	return {
+		deleteExpiration: (id: number) => post(`item/${id}`, {}),
+		...a,
+	};
 };

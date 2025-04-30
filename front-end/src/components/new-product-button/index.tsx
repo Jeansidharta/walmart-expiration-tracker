@@ -43,7 +43,7 @@ export const NewProductButton: FC<{
 		const newProduct = await createProduct(values);
 		notifications.show({
 			title: "Success!",
-			message: "Product created successfuly!",
+			message: "Product created successfully!",
 			color: "green",
 		});
 		mutate(`product/${values.barcode}`, newProduct);

@@ -1,21 +1,22 @@
 import gleam/bool
-import gleam/dynamic/decode
 import gleam/json
+import gleam/option
+import models/item
 import server_response
 import sqlight
 import utils
 
 pub fn delete(id: Int, conn: sqlight.Connection) {
-  use how_many_deleted <-
+  use item <-
     sqlight.query(
-      "DELETE FROM Item WHERE id = ? RETURNING count(*);",
+      "DELETE FROM Item WHERE id = ? RETURNING *;",
       conn,
       [sqlight.int(id)],
-      decode.int,
+      item.decode_sqlight(),
     )
-    |> utils.sqlight_expect_one
+    |> utils.sqlight_extract_one
 
-  use <- bool.lazy_guard(how_many_deleted == 0, fn() {
+  use <- bool.lazy_guard(option.is_none(item), fn() {
     server_response.error("Item now found")
   })
 

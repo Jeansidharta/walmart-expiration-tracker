@@ -27,6 +27,7 @@ export const HomePage: FC = () => {
 		data,
 		isLoading: isLoadingItems,
 		error: itemsError,
+		mutate,
 	} = useSWR<{
 		items: Item[];
 		products: Record<string, Product>;
@@ -52,6 +53,7 @@ export const HomePage: FC = () => {
 							key={item.id}
 							expirationItem={item}
 							product={products[item.product_barcode]}
+							onDelete={mutate}
 						/>
 					)),
 				)}

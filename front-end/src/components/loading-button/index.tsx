@@ -9,20 +9,32 @@ export const LoadingButton: FC<
 		icon?: ReactNode;
 	} & ButtonProps &
 	ComponentProps<"button">
-> = ({ isLoading = false, children, icon, error, ...props }) => {
-	const currentIcon = isLoading ? <Loader /> : icon;
-	return (
-		<Input.Wrapper>
-			<Button {...props}>
-				{children}
-				{currentIcon && (
-					<>
-						<Space w={8} />
-						{currentIcon}
-					</>
-				)}
-			</Button>
-			<Input.Error mt={4}>{error}</Input.Error>
-		</Input.Wrapper>
-	);
-};
+> = ({
+	isLoading = false,
+	children,
+	icon,
+	error,
+	onClick = () => { },
+	disabled,
+	...props
+}) => {
+		const currentIcon = isLoading ? <Loader size={16} /> : icon;
+		return (
+			<Input.Wrapper>
+				<Button
+					{...props}
+					onClick={(event) => !isLoading && onClick(event)}
+					disabled={disabled || isLoading}
+				>
+					{children}
+					{currentIcon && (
+						<>
+							<Space w={8} />
+							{currentIcon}
+						</>
+					)}
+				</Button>
+				<Input.Error mt={4}>{error}</Input.Error>
+			</Input.Wrapper>
+		);
+	};
