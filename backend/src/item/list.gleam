@@ -1,46 +1,16 @@
 import gleam/bool
-import gleam/dynamic/decode
+import gleam/dict.{type Dict}
 import gleam/json
 import gleam/list
 import gleam/option
+import gleam/result
+import gleam/string
 import models/item
 import models/product
 import server_response
 import sqlight
 import utils
 import wisp
-
-pub fn decode() {
-  // Item
-  use id <- decode.field(0, decode.int)
-  use creation_date_item <- decode.field(1, decode.int)
-  use product_barcode <- decode.field(2, decode.string)
-  use location <- decode.field(3, decode.string)
-  use expires_at <- decode.field(4, decode.int)
-  use count <- decode.field(5, decode.int)
-
-  // Product
-  use barcode <- decode.field(6, decode.string)
-  use creation_date_product <- decode.field(7, decode.int)
-  use name <- decode.field(8, decode.optional(decode.string))
-  use image <- decode.field(9, decode.string)
-  decode.success(#(
-    item.Item(
-      id:,
-      creation_date: creation_date_item,
-      product_barcode:,
-      location:,
-      expires_at:,
-      count:,
-    ),
-    product.Product(
-      barcode:,
-      creation_date: creation_date_product,
-      name:,
-      image:,
-    ),
-  ))
-}
 
 pub fn list(
   conn: sqlight.Connection,
@@ -64,10 +34,7 @@ pub fn list(
   let query =
     "SELECT "
     <> item.full_columns()
-    <> ","
-    <> product.full_columns()
     <> " FROM Item"
-    <> " JOIN Product ON Product.barcode = Item.product_barcode"
     <> case filters == "" {
       True -> ""
       False -> " WHERE " <> filters
@@ -79,16 +46,44 @@ pub fn list(
     }
 
   use items <-
-    sqlight.query(query, conn, [], decode())
+    sqlight.query(query, conn, [], item.decode_sqlight())
     |> utils.sqlight_many
 
-  let response =
-    json.array(items, fn(item) {
-      json.object([
-        #("item", item.json(item.0)),
-        #("product", product.json(item.1)),
-      ])
+  let product_ids: Dict(String, Nil) =
+    list.fold(items, dict.new(), fn(acc, item) {
+      dict.insert(acc, item.product_barcode, Nil)
     })
+
+  let query_products =
+    "SELECT "
+    <> product.full_columns()
+    <> " FROM Product"
+    <> " WHERE barcode IN ('"
+    <> string.join(dict.keys(product_ids), "', '")
+    <> "')"
+
+  use products_query_result <-
+    sqlight.query(query_products, conn, [], product.decode_sqlight())
+    |> utils.sqlight_many
+
+  let products =
+    dict.map_values(product_ids, fn(barcode, _) {
+      let assert Ok(product) =
+        list.find(products_query_result, fn(product) {
+          product.barcode == barcode
+        })
+        |> result.map_error(fn(_) {
+          wisp.log_error("Failed to find product with barcode " <> barcode)
+          Nil
+        })
+      product.json(product)
+    })
+
+  let response =
+    json.object([
+      #("items", json.array(items, item.json)),
+      #("products", json.object(dict.to_list(products))),
+    ])
 
   server_response.success_200("Success", response)
 }
