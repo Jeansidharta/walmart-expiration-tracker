@@ -1,1 +1,1 @@
-export const BASE_URL = "https://expiration.sidharta.xyz/api";
+export const BASE_URL = import.meta.env.VITE_BACKEND_URL;
