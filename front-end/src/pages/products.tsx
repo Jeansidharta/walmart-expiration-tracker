@@ -23,7 +23,7 @@ export const ProductsPage: FC = () => {
 	const { data, isLoading, error } = useSWR<{
 		products: Product[];
 		total_items: number;
-	}>(`product?page=${page}&page_size=${PAGE_SIZE}`);
+	}>(`product?page=${page - 1}&page_size=${PAGE_SIZE}`);
 
 	return (
 		<Stack>

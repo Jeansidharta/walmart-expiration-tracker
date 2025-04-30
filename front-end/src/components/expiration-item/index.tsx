@@ -32,9 +32,12 @@ export const ExpirationItem: FC<{
 			<Group>
 				<ImageExpandable src={product.image} w={150} h={200} />
 				<Stack>
-					<Text fw={700} tt="capitalize">
-						{product.name}
-					</Text>
+					<Group>
+						<Text fw={700} tt="capitalize">
+							{product.name}
+						</Text>
+						<Text c="dimmed">{expirationItem.id}</Text>
+					</Group>
 					<Group>
 						Location: {expirationItem.location}
 						<MapModalButton value={expirationItem.location} />
