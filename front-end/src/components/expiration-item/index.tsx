@@ -5,21 +5,35 @@ import sAgo from "s-ago";
 import { ImageExpandable } from "../image-expandable";
 import { MapModalButton } from "../map-modal-button";
 
+function formatDate(date: Date) {
+	const year = date.getFullYear().toString().padStart(4, "0");
+	const month = (date.getMonth() + 1).toString().padStart(2, "0");
+	const day =
+		date.getDate() === 1 ? null : date.getDate().toString().padStart(2, "0");
+	return `${month}/${day ? `${day}/` : ""}${year}`;
+}
+
 export const ExpirationItem: FC<{ expirationItem: Item; product: Product }> = ({
 	expirationItem,
 	product,
 }) => {
+	const expiration = new Date(expirationItem.expires_at);
 	return (
-		<Paper withBorder p="xs">
+		<Paper withBorder p="xs" w="100%">
 			<Group>
 				<ImageExpandable src={product.image} w={100} h={100} />
 				<Stack>
-					<Text fw={700}>{product.name}</Text>
+					<Text fw={700} tt="capitalize">
+						{product.name}
+					</Text>
 					<Group>
 						Location: {expirationItem.location}
 						<MapModalButton value={expirationItem.location} />
 					</Group>
-					<Text>Expires {sAgo(new Date(expirationItem.expires_at))}</Text>
+					<Group>
+						<Text>Expires {sAgo(expiration)}</Text>
+						<Text c="dimmed">({formatDate(expiration)})</Text>
+					</Group>
 				</Stack>
 			</Group>
 		</Paper>

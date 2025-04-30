@@ -1,3 +1,4 @@
+import gleam/dict
 import gleam/http
 import gleam/int
 import item/delete.{delete}
@@ -14,7 +15,7 @@ pub fn router(
   conn: sqlight.Connection,
   path_segments: List(String),
 ) -> wisp.Response {
-  let queries = wisp.get_query(req)
+  let queries = wisp.get_query(req) |> dict.from_list()
   case path_segments, req.method {
     [], http.Get -> list(conn, queries)
     [], http.Post -> post(req, conn)

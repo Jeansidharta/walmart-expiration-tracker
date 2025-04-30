@@ -1,14 +1,27 @@
 import { useSearchParams } from "react-router";
 
-export function useSearchParam(paramName: string, defaultValue?: string) {
+export function useSearchParam<T extends { toString: () => string }>(
+	paramName: string,
+	parseValue: (val: string) => T,
+) {
 	const [searchParams, setSearchParams] = useSearchParams();
-	const param = searchParams.get(paramName) ?? defaultValue;
+	const maybeParam = searchParams.get(paramName);
+	const param = maybeParam ? parseValue(maybeParam) : null;
 	return [
 		param,
-		(newValue: string) => {
+		(newValue: T) => {
 			const newParams = new URLSearchParams(searchParams);
-			newParams.set(paramName, newValue);
+			newParams.set(paramName, newValue.toString());
 			setSearchParams(newParams);
 		},
 	] as const;
+}
+
+export function useSearchParamWithDefault<T extends { toString: () => string }>(
+	paramName: string,
+	parseValue: (val: string) => T,
+	defaultValue: T,
+) {
+	const [val, setVal] = useSearchParam(paramName, parseValue);
+	return [val ?? defaultValue, setVal] as const;
 }

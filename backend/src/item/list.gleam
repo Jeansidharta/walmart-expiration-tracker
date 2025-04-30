@@ -1,5 +1,5 @@
-import gleam/bool
 import gleam/dict.{type Dict}
+import gleam/dynamic/decode
 import gleam/json
 import gleam/list
 import gleam/option
@@ -14,40 +14,51 @@ import wisp
 
 pub fn list(
   conn: sqlight.Connection,
-  queries: List(#(String, String)),
+  queries: Dict(String, String),
 ) -> wisp.Response {
-  let expired =
-    list.find_map(queries, fn(query) {
-      bool.guard(
-        when: query.0 == "expired",
-        return: Ok(query.1 == "true"),
-        otherwise: fn() { Error(Nil) },
-      )
-    })
-    |> option.from_result()
+  use expired <- utils.extract_param_bool(queries, "expired", fn() {
+    server_response.error("Query param \"expired\" must be a valid boolean")
+  })
 
-  let filters = case expired {
-    option.Some(True) -> "Item.expires_at <= (unixepoch() * 1000)"
-    option.Some(False) -> "Item.expires_at > (unixepoch() * 1000)"
+  let expired_query = case expired {
+    option.Some(True) -> " ORDER BY expires_at DESC"
+    option.Some(False) -> " ORDER BY expires_at ASC"
     option.None -> ""
   }
+
+  use pagination_query <- utils.query_params_extract_pagination(queries)
+
+  let filters_query = case expired {
+    option.Some(True) -> " WHERE Item.expires_at <= (unixepoch() * 1000)"
+    option.Some(False) -> " WHERE Item.expires_at > (unixepoch() * 1000)"
+    option.None -> ""
+  }
+
   let query =
     "SELECT "
     <> item.full_columns()
     <> " FROM Item"
-    <> case filters == "" {
-      True -> ""
-      False -> " WHERE " <> filters
-    }
-    <> case expired {
-      option.Some(True) -> " ORDER BY expires_at DESC;"
-      option.Some(False) -> " ORDER BY expires_at ASC;"
-      option.None -> ";"
-    }
+    <> filters_query
+    <> expired_query
+    <> pagination_query
+
+  wisp.log_info(query)
 
   use items <-
     sqlight.query(query, conn, [], item.decode_sqlight())
     |> utils.sqlight_many
+
+  use total_items <-
+    sqlight.query(
+      "SELECT COUNT(*) as 'count' FROM Item" <> filters_query <> expired_query,
+      conn,
+      [],
+      {
+        use count <- decode.field(0, decode.int)
+        decode.success(count)
+      },
+    )
+    |> utils.sqlight_expect_one()
 
   let product_ids: Dict(String, Nil) =
     list.fold(items, dict.new(), fn(acc, item) {
@@ -83,6 +94,7 @@ pub fn list(
     json.object([
       #("items", json.array(items, item.json)),
       #("products", json.object(dict.to_list(products))),
+      #("total_items", json.int(total_items)),
     ])
 
   server_response.success_200("Success", response)
