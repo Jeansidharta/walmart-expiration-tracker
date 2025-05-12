@@ -4,7 +4,6 @@ export type Product = {
 	barcode: string;
 	created_at: number;
 	name?: string | null | undefined;
-	image: string;
 };
 
 export type Item = {
@@ -13,5 +12,4 @@ export type Item = {
 	product_barcode: string;
 	location: string;
 	expires_at: number;
-	count: number;
 };

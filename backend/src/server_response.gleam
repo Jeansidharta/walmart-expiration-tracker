@@ -1,4 +1,5 @@
 import gleam/json
+import sqlight
 import wisp
 
 pub fn success_200(message: String, data: json.Json) -> wisp.Response {
@@ -38,4 +39,8 @@ pub fn internal_error(error: String) -> wisp.Response {
     |> json.to_string_tree
 
   wisp.response(500) |> wisp.json_body(body)
+}
+
+pub fn sqlight_error(error: sqlight.Error) -> wisp.Response {
+  internal_error(error.message)
 }

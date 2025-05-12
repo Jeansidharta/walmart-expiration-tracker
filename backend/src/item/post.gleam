@@ -21,7 +21,7 @@ pub fn post(req: wisp.Request, conn: sqlight.Connection) -> wisp.Response {
         "INSERT INTO LocationProduct (location, product_barcode) VALUES (?, ?) RETURNING last_update",
         conn,
         [sqlight.text(body.location), sqlight.text(body.product_barcode)],
-        decode.int,
+        decode.at([0], decode.int),
       )
       |> utils.sqlight_try_one(),
     )
@@ -29,7 +29,7 @@ pub fn post(req: wisp.Request, conn: sqlight.Connection) -> wisp.Response {
     use item <- result.then(
       sqlight.query("INSERT INTO item
 	  (product_barcode, location, expires_at)
-	  VALUES (?, ?, ?, ?) RETURNING " <> item.full_columns(), conn, [
+	  VALUES (?, ?, ?) RETURNING " <> item.full_columns(), conn, [
         sqlight.text(body.product_barcode),
         sqlight.text(body.location),
         sqlight.int(body.expires_at),

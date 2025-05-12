@@ -39,7 +39,10 @@ export const ProductsPage: FC = () => {
 								<Text tt="capitalize" fw={700} ta="center">
 									{product.name}
 								</Text>
-								<ImageExpandable w={100} src={productImageURL( product.barcode)} />
+								<ImageExpandable
+									w={100}
+									src={productImageURL(product.barcode)}
+								/>
 							</Stack>
 						</Paper>
 					)),

@@ -38,15 +38,11 @@ pub fn decoder() -> decode.Decoder(ProductWithImage) {
   decode.success(ProductWithImage(barcode:, creation_date:, name:, image:))
 }
 
-pub fn decode_sqlight_from(base: Int) {
-  use barcode <- decode.field(base + 0, decode.string)
-  use creation_date <- decode.field(base + 1, decode.int)
-  use name <- decode.field(base + 2, decode.optional(decode.string))
-  decode.success(Product(barcode:, creation_date:, name:))
-}
-
 pub fn decode_sqlight() {
-  decode_sqlight_from(0)
+  use barcode <- decode.field(0, decode.string)
+  use creation_date <- decode.field(1, decode.int)
+  use name <- decode.field(2, decode.optional(decode.string))
+  decode.success(Product(barcode:, creation_date:, name:))
 }
 
 pub fn json(product: Product) -> json.Json {

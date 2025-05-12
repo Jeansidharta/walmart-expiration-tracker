@@ -3,7 +3,8 @@ import gleam/erlang/process
 import item/item
 import migrant
 import mist
-import product/product
+import product/product_router.{router as product_router}
+import register/register_router.{router as register_router}
 import server_response
 import sqlight
 import wisp
@@ -36,8 +37,9 @@ pub fn request_handler(
 ) -> wisp.Response {
   use req <- middleware(req)
   case wisp.path_segments(req) {
-    ["product", ..path] -> product.router(req, conn, path)
+    ["product", ..path] -> product_router(req, conn, path)
     ["item", ..path] -> item.router(req, conn, path)
+    ["register", ..path] -> register_router(req, conn, path)
     _ -> server_response.error_with_code("Invalid API Rest Path", 404)
   }
 }

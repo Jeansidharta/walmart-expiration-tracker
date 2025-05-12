@@ -16,12 +16,16 @@ import { formatExpirationDate } from "../utils/format-date";
 import { useMemo } from "react";
 import { productImageURL } from "../utils/product-image-uri";
 
-type Data = { productUpc: string; selectedShelf: string; expirationDate: Date };
+type Data = {
+	productUpc: string;
+	selectedShelf: string;
+	expirationDate: string;
+};
 
 export function RegisterExpirationPage() {
 	const form = useForm<Data>({
 		initialValues: {
-			expirationDate: new Date(),
+			expirationDate: new Date().toISOString(),
 			productUpc: "",
 			selectedShelf: "",
 		},
@@ -30,9 +34,11 @@ export function RegisterExpirationPage() {
 			selectedShelf: (v) =>
 				v === "" ? "You must select a shelf location" : null,
 			expirationDate: (v) =>
-				v.getTime() <= Date.now()
+				new Date(v).getTime() <= Date.now()
 					? "The expiration date should be after the current date"
-					: datesRegistered?.find((exp) => exp === formatExpirationDate(v))
+					: datesRegistered?.find(
+						(exp) => exp === formatExpirationDate(new Date(v)),
+					)
 						? "This date has already been registered"
 						: null,
 		},
@@ -59,8 +65,7 @@ export function RegisterExpirationPage() {
 	async function handleSubmit(value: Data) {
 		const { selectedShelf, productUpc, expirationDate } = value;
 		await createExpiration({
-			count: 1,
-			expires_at: expirationDate.getTime(),
+			expires_at: new Date(expirationDate).getTime(),
 			location: selectedShelf,
 			product_barcode: productUpc,
 		});

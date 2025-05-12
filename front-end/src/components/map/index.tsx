@@ -40,9 +40,13 @@ export const Map: FC<{
 	shelvesToHighlight?: string[];
 	selectedShelf?: string | null;
 	viewbox?: Viewbox;
+	height?: number;
+	preventScroll?: boolean;
 }> = ({
 	onChange,
+	height = 500,
 	selectedShelf,
+	preventScroll = false,
 	shelvesToHighlight = [],
 	viewbox = BASE_VIEWBOX,
 }) => {
@@ -82,10 +86,14 @@ export const Map: FC<{
 
 		return (
 			<div
-				style={{
-					width: "100%",
-					overflowX: "auto",
-				}}
+				style={
+					preventScroll
+						? {}
+						: {
+							width: "100%",
+							overflowX: "auto",
+						}
+				}
 				ref={rootRef}
 			>
 				<div style={{ width: "max-content" }}>
@@ -93,7 +101,7 @@ export const Map: FC<{
 						onClick={handleClick}
 						viewBox={viewboxToString(viewbox)}
 						width="100%"
-						height="500px"
+						height={`${height}px`}
 						className={style.map}
 						dangerouslySetInnerHTML={{ __html: PlantSvg }}
 					/>
