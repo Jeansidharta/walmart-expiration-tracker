@@ -22,70 +22,89 @@ function findLabel(elem: HTMLElement): string | null {
 	return null;
 }
 
+type Viewbox = { x: number; y: number; width: number; height: number };
+
+const BASE_VIEWBOX: Viewbox = {
+	x: 1219.169,
+	y: 1291.454,
+	width: 788.339,
+	height: 168.92,
+};
+
+function viewboxToString({ x, y, width, height }: Viewbox) {
+	return `${x} ${y} ${width} ${height}`;
+}
+
 export const Map: FC<{
 	onChange?: (isle: string | null) => void;
 	shelvesToHighlight?: string[];
 	selectedShelf?: string | null;
-}> = ({ onChange, selectedShelf, shelvesToHighlight = [] }) => {
-	const rootRef = useRef<HTMLDivElement | null>(null);
-	const [_selectedShelf, handleChange] = useUncontrolled({
-		value: selectedShelf,
-		finalValue: null,
-		onChange,
-	});
+	viewbox?: Viewbox;
+}> = ({
+	onChange,
+	selectedShelf,
+	shelvesToHighlight = [],
+	viewbox = BASE_VIEWBOX,
+}) => {
+		const rootRef = useRef<HTMLDivElement | null>(null);
+		const [_selectedShelf, handleChange] = useUncontrolled({
+			value: selectedShelf,
+			finalValue: null,
+			onChange,
+		});
 
-	function handleClick(event: React.MouseEvent<SVGSVGElement, MouseEvent>) {
-		if (!handleChange) return;
-		const label = findLabel(event.target as unknown as HTMLElement);
-		if (label) {
-			if (label === _selectedShelf) handleChange(null);
-			else handleChange(label);
+		function handleClick(event: React.MouseEvent<SVGSVGElement, MouseEvent>) {
+			if (!handleChange) return;
+			const label = findLabel(event.target as unknown as HTMLElement);
+			if (label) {
+				if (label === _selectedShelf) handleChange(null);
+				else handleChange(label);
+			}
 		}
-	}
 
-	const selector =
-		_selectedShelf &&
-		`[inkscape\\:label="${_selectedShelf}"] { fill: var(--color-primary) !important; }`;
-	const highlight = `${shelvesToHighlight.map((shelf) => `[inkscape\\:label="${shelf}"] { fill: var(--color-secondary) !important; }`).join("\n")}`;
+		const selector =
+			_selectedShelf &&
+			`[inkscape\\:label="${_selectedShelf}"] { fill: var(--color-primary) !important; }`;
+		const highlight = `${shelvesToHighlight.map((shelf) => `[inkscape\\:label="${shelf}"] { fill: var(--color-secondary) !important; }`).join("\n")}`;
 
-	useEffect(() => {
-		const parentDiv = rootRef.current;
-		if (!parentDiv) return;
-		if (!_selectedShelf) return;
+		useEffect(() => {
+			const parentDiv = rootRef.current;
+			if (!parentDiv) return;
+			if (!_selectedShelf) return;
 
-		const selectedElement = parentDiv.querySelector(
-			`[inkscape\\:label="${_selectedShelf}"]`,
-		);
-		if (!selectedElement) return;
-		selectedElement.scrollIntoView({ inline: "center" });
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+			const selectedElement = parentDiv.querySelector(
+				`[inkscape\\:label="${_selectedShelf}"]`,
+			);
+			if (!selectedElement) return;
+			selectedElement.scrollIntoView({ inline: "center" });
+			// eslint-disable-next-line react-hooks/exhaustive-deps
+		}, []);
 
-	return (
-		<div
-			style={{
-				width: "100%",
-				overflowX: "auto",
-			}}
-			ref={rootRef}
-		>
-			<div style={{ width: "max-content" }}>
-				<svg
-					onClick={handleClick}
-					viewBox="1219.169 1291.454 788.339 168.920"
-					width="100%"
-					height="500px"
-					className={style.map}
-					dangerouslySetInnerHTML={{ __html: PlantSvg }}
-				/>
-				<style>
-					.{style.map} {"{"}
-					{highlight}
-					{"\n"}
-					{selector}
-					{"}"}
-				</style>
+		return (
+			<div
+				style={{
+					width: "100%",
+					overflowX: "auto",
+				}}
+				ref={rootRef}
+			>
+				<div style={{ width: "max-content" }}>
+					<svg
+						onClick={handleClick}
+						viewBox={viewboxToString(viewbox)}
+						width="100%"
+						height="500px"
+						className={style.map}
+						dangerouslySetInnerHTML={{ __html: PlantSvg }}
+					/>
+					<style>
+						.{style.map} {"{"}
+						{highlight}
+						{"\n"}
+						{selector}
+						{"}"}
+					</style>
+				</div>
 			</div>
-		</div>
-	);
-};
+		);
+	};

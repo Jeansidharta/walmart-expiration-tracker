@@ -1,6 +1,7 @@
 import gleam/dict
 import gleam/http
 import gleam/int
+import gleam/result
 import item/delete.{delete}
 import item/get.{get}
 import item/list.{list}
@@ -22,8 +23,10 @@ pub fn router(
     [id], method -> {
       use id <-
         int.parse(id)
-        |> utils.if_err(fn(_) { server_response.error("Invalid id: " <> id) })
-
+        |> result.map_error(fn(_) {
+          server_response.error("Invalid id: " <> id)
+        })
+        |> utils.unwrap_error()
       case method {
         http.Get -> get(id, conn)
         http.Delete -> delete(id, conn)

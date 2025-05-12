@@ -44,6 +44,7 @@ pub fn request_handler(
 
 pub fn main() {
   use conn <- sqlight.with_connection("file:db.sqlite3")
+  let assert Ok(_) = sqlight.exec("PRAGMA foreign_keys = ON;", conn)
   let assert Ok(priv) = erlang.priv_directory("backend_gleam")
   let assert Ok(_) = migrant.migrate(conn, priv <> "/migrations")
 

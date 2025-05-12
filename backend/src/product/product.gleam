@@ -1,8 +1,7 @@
 import gleam/dict
 import gleam/http
-import product/delete.{delete}
+import product/barcode/router.{router as barcode_router}
 import product/get.{get}
-import product/list.{list}
 import product/post.{post}
 import sqlight
 import wisp
@@ -14,15 +13,9 @@ pub fn router(
 ) -> wisp.Response {
   let queries = wisp.get_query(req) |> dict.from_list()
   case path_segments, req.method {
-    [], http.Get -> list(conn, queries)
+    [], http.Get -> get(conn, queries)
     [], http.Post -> post(req, conn)
-    [barcode], method -> {
-      case method {
-        http.Get -> get(barcode, conn)
-        http.Delete -> delete(barcode, conn)
-        _ -> wisp.not_found()
-      }
-    }
+    [barcode, ..rest], _ -> barcode_router(req, conn, rest, barcode)
     _, _ -> wisp.not_found()
   }
 }

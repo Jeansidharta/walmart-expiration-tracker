@@ -2,6 +2,7 @@ import { FC } from "react";
 import { Card, Text } from "@mantine/core";
 import { Product } from "../../models";
 import { ImageExpandable } from "../image-expandable";
+import { productImageURL } from "../../utils/product-image-uri";
 
 const IMAGE_DIMENSIONS = { x: 300, y: 300 };
 
@@ -16,7 +17,7 @@ export const ProductCard: FC<{ product: Product }> = ({ product }) => {
 			<ImageExpandable
 				h={IMAGE_DIMENSIONS.y}
 				w={IMAGE_DIMENSIONS.x}
-				src={product.image}
+				src={productImageURL(product.barcode)}
 			/>
 		</Card>
 	);

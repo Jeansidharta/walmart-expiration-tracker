@@ -9,13 +9,12 @@ pub type Item {
     product_barcode: String,
     location: String,
     expires_at: Int,
-    count: Int,
   )
 }
 
 pub const columns = [
   "item.id", "item.creation_date", "item.product_barcode", "item.location",
-  "item.expires_at", "item.count",
+  "item.expires_at",
 ]
 
 pub fn full_columns() {
@@ -28,14 +27,12 @@ pub fn decoder() -> decode.Decoder(Item) {
   use product_barcode <- decode.field("product_barcode", decode.string)
   use location <- decode.field("location", decode.string)
   use expires_at <- decode.field("expires_at", decode.int)
-  use count <- decode.field("count", decode.int)
   decode.success(Item(
     id:,
     creation_date:,
     product_barcode:,
     location:,
     expires_at:,
-    count:,
   ))
 }
 
@@ -45,14 +42,12 @@ pub fn decode_sqlight_from(base: Int) {
   use product_barcode <- decode.field(base + 2, decode.string)
   use location <- decode.field(base + 3, decode.string)
   use expires_at <- decode.field(base + 4, decode.int)
-  use count <- decode.field(base + 5, decode.int)
   decode.success(Item(
     id:,
     creation_date:,
     product_barcode:,
     location:,
     expires_at:,
-    count:,
   ))
 }
 
@@ -67,23 +62,16 @@ pub fn json(product: Item) -> json.Json {
     #("product_barcode", json.string(product.product_barcode)),
     #("location", json.string(product.location)),
     #("expires_at", json.int(product.expires_at)),
-    #("count", json.int(product.count)),
   ])
 }
 
 pub type ItemNoId {
-  ItemNoId(
-    product_barcode: String,
-    location: String,
-    expires_at: Int,
-    count: Int,
-  )
+  ItemNoId(product_barcode: String, location: String, expires_at: Int)
 }
 
 pub fn decoder_no_id() -> decode.Decoder(ItemNoId) {
   use product_barcode <- decode.field("product_barcode", decode.string)
   use location <- decode.field("location", decode.string)
   use expires_at <- decode.field("expires_at", decode.int)
-  use count <- decode.field("count", decode.int)
-  decode.success(ItemNoId(product_barcode:, location:, expires_at:, count:))
+  decode.success(ItemNoId(product_barcode:, location:, expires_at:))
 }

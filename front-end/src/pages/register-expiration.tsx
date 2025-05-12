@@ -14,6 +14,7 @@ import { notifications } from "@mantine/notifications";
 import { ImageExpandable } from "../components/image-expandable";
 import { formatExpirationDate } from "../utils/format-date";
 import { useMemo } from "react";
+import { productImageURL } from "../utils/product-image-uri";
 
 type Data = { productUpc: string; selectedShelf: string; expirationDate: Date };
 
@@ -96,7 +97,7 @@ export function RegisterExpirationPage() {
 					) : data ? (
 						<Card withBorder maw={300}>
 							{data.product.name && <Text>{data.product.name}</Text>}
-							<ImageExpandable src={data.product.image} />
+							<ImageExpandable src={productImageURL(data.product.barcode)} />
 						</Card>
 					) : null}
 					<div

@@ -58,7 +58,8 @@ pub fn list(
         decode.success(count)
       },
     )
-    |> utils.sqlight_expect_one()
+    |> utils.sqlight_extract_one()
+    |> utils.unwrap_error()
 
   let product_ids: Dict(String, Nil) =
     list.fold(items, dict.new(), fn(acc, item) {

@@ -15,6 +15,7 @@ import { ImageExpandable } from "../components/image-expandable";
 import useSWR from "swr";
 import { withLoader } from "../utils/with-loader";
 import { useSearchParamWithDefault } from "../utils/use-search-param";
+import { productImageURL } from "../utils/product-image-uri";
 
 const PAGE_SIZE = 10;
 
@@ -38,7 +39,7 @@ export const ProductsPage: FC = () => {
 								<Text tt="capitalize" fw={700} ta="center">
 									{product.name}
 								</Text>
-								<ImageExpandable w={100} src={product.image} />
+								<ImageExpandable w={100} src={productImageURL( product.barcode)} />
 							</Stack>
 						</Paper>
 					)),

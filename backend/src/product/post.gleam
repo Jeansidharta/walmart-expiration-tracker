@@ -1,5 +1,6 @@
 import gleam/dynamic/decode
 import gleam/json
+import gleam/result
 import models/product
 import sqlight
 import utils
@@ -11,7 +12,8 @@ pub fn post(req: wisp.Request, conn: sqlight.Connection) -> wisp.Response {
   use body <-
     body
     |> decode.run(product.decoder_no_create_date())
-    |> utils.if_err(utils.decode_err_server_response)
+    |> result.map_error(utils.decode_err_server_response)
+    |> utils.unwrap_error()
 
   use product <-
     sqlight.query(
@@ -25,7 +27,8 @@ pub fn post(req: wisp.Request, conn: sqlight.Connection) -> wisp.Response {
       ],
       product.decode_sqlight(),
     )
-    |> utils.sqlight_expect_one
+    |> utils.sqlight_extract_one()
+    |> utils.unwrap_error()
 
   let response =
     product

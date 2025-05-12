@@ -6,6 +6,7 @@ import { Item, Product, ServerResponse } from "./models";
 import { MainLayout } from "./layouts/main";
 import { BackLayout } from "./layouts/back";
 import { ProductsPage } from "./pages/products";
+import { InspectionPage } from "./pages/inspection";
 
 const router = createBrowserRouter([
 	{
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
 		Component: MainLayout,
 		children: [
 			{ path: "/register-expiration", Component: RegisterExpirationPage },
+			{
+				Component: InspectionPage,
+				path: "/inspection",
+			},
 			{
 				path: "/",
 				Component: HomePage,

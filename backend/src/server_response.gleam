@@ -28,7 +28,8 @@ pub fn error(message: String) -> wisp.Response {
   error_with_code(message, 400)
 }
 
-pub fn internal_error() -> wisp.Response {
+pub fn internal_error(error: String) -> wisp.Response {
+  wisp.log_error(error)
   let body =
     json.object([
       #("success", json.bool(False)),

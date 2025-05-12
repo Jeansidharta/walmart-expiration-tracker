@@ -14,7 +14,8 @@ pub fn delete(id: Int, conn: sqlight.Connection) {
       [sqlight.int(id)],
       item.decode_sqlight(),
     )
-    |> utils.sqlight_extract_one
+    |> utils.sqlight_try_one()
+    |> utils.unwrap_error()
 
   use <- bool.lazy_guard(option.is_none(item), fn() {
     server_response.error("Item now found")

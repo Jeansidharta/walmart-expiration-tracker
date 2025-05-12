@@ -5,6 +5,7 @@ import { AppShell, Flex, NavLink as NavLinkMantine } from "@mantine/core";
 export const MainLayout: FC = () => {
 	const isExpirations = Boolean(useMatch("/"));
 	const isProducts = Boolean(useMatch("/product"));
+	const isInspection = Boolean(useMatch("/inspection"));
 	const navigate = useNavigate();
 	return (
 		<AppShell padding="md" header={{ height: 70 }}>
@@ -29,6 +30,16 @@ export const MainLayout: FC = () => {
 						label="Products"
 						w="max-content"
 						active={isProducts}
+					/>
+					<NavLinkMantine
+						onClick={(e) => {
+							navigate("/inspection");
+							e.preventDefault();
+						}}
+						href="/inspection"
+						label="Inspection"
+						w="max-content"
+						active={isInspection}
 					/>
 				</Flex>
 			</AppShell.Header>

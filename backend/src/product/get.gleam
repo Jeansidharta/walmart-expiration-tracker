@@ -1,45 +1,36 @@
+import gleam/dict
+import gleam/dynamic/decode
 import gleam/json
-import gleam/option
-import models/item
 import models/product
 import server_response
 import sqlight
 import utils
 import wisp
 
-pub fn get(barcode: String, conn: sqlight.Connection) -> wisp.Response {
-  use product <-
-    sqlight.query(
-      "SELECT "
-        <> product.full_columns()
-        <> " FROM Product "
-        <> "WHERE product.barcode = ?;",
-      conn,
-      [sqlight.text(barcode)],
-      product.decode_sqlight(),
-    )
-    |> utils.sqlight_extract_one
+pub fn get(
+  conn: sqlight.Connection,
+  queries: dict.Dict(String, String),
+) -> wisp.Response {
+  use pagination <- utils.query_params_extract_pagination(queries)
+  let sql = "SELECT " <> product.full_columns() <> " FROM Product" <> pagination
 
-  option.map(product, fn(product) {
-    use items <-
-      sqlight.query(
-        "SELECT "
-          <> item.full_columns()
-          <> " FROM Product "
-          <> " JOIN Item ON product.barcode = item.product_barcode"
-          <> " WHERE product.barcode = ?;",
-        conn,
-        [sqlight.text(barcode)],
-        item.decode_sqlight(),
-      )
-      |> utils.sqlight_many
-    server_response.success_200(
-      "Success",
-      json.object([
-        #("items", json.array(items, item.json)),
-        #("product", product.json(product)),
-      ]),
-    )
-  })
-  |> option.lazy_unwrap(fn() { server_response.error("Product Not Found") })
+  use product <-
+    sqlight.query(sql, conn, [], product.decode_sqlight())
+    |> utils.sqlight_many
+
+  use total_items <-
+    sqlight.query("SELECT COUNT(*) as count FROM Product", conn, [], {
+      use count <- decode.field(0, decode.int)
+      decode.success(count)
+    })
+    |> utils.sqlight_extract_one()
+    |> utils.unwrap_error()
+
+  let response =
+    json.object([
+      #("products", json.array(product, product.json)),
+      #("total_items", json.int(total_items)),
+    ])
+
+  server_response.success_200("Success", response)
 }

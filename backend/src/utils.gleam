@@ -27,11 +27,11 @@ pub fn decode_err_server_response(
   |> server_response.error
 }
 
-pub fn if_err(result: Result(a, b), if_err: fn(b) -> c) -> fn(fn(a) -> c) -> c {
-  fn(f) {
+pub fn unwrap_error(result: Result(a, b)) -> fn(fn(a) -> b) -> b {
+  fn(otherwise) {
     case result {
-      Ok(o) -> f(o)
-      Error(e) -> if_err(e)
+      Ok(o) -> otherwise(o)
+      Error(e) -> e
     }
   }
 }
@@ -40,29 +40,25 @@ pub fn sqlight_many(val: Result(List(value), sqlight.Error)) {
   val
   |> result.try_recover(fn(err) {
     wisp.log_error(err.message)
-    Error(Nil)
+    Error(server_response.internal_error("Failed to extract many"))
   })
-  |> if_err(fn(_) { server_response.internal_error() })
+  |> unwrap_error()
 }
 
-pub fn sqlight_expect_one(val: Result(List(value), sqlight.Error)) {
+pub fn sqlight_try_one(val: Result(List(value), sqlight.Error)) {
   val
   |> result.try_recover(fn(err) {
     wisp.log_error(err.message)
-    Error(Nil)
+    Error(server_response.internal_error("Failed to extract one"))
   })
-  |> result.then(fn(a) { list.first(a) })
-  |> if_err(fn(_) { server_response.internal_error() })
+  |> result.map(fn(a) { list.first(a) |> option.from_result })
 }
 
 pub fn sqlight_extract_one(val: Result(List(value), sqlight.Error)) {
-  val
-  |> result.try_recover(fn(err) {
-    wisp.log_error(err.message)
-    Error(Nil)
+  sqlight_try_one(val)
+  |> result.then(fn(v) {
+    option.to_result(v, server_response.internal_error("Failed to extract one"))
   })
-  |> result.map(fn(a) { list.first(a) |> option.from_result })
-  |> if_err(fn(_) { server_response.internal_error() })
 }
 
 pub fn extract_param_bool(
@@ -111,9 +107,52 @@ pub fn query_params_extract_pagination(
 
   let sql_query_part = case page_size {
     option.Some(page_size) ->
-      " LIMIT " <> int.to_string(page_size) <> " OFFSET " <> int.to_string(page * page_size)
+      " LIMIT "
+      <> int.to_string(page_size)
+      <> " OFFSET "
+      <> int.to_string(page * page_size)
     option.None -> ""
   }
 
   callback(sql_query_part)
+}
+
+pub fn lazy_unwrap_error(res: Result(a, b), callback: fn(a) -> b) -> b {
+  case res {
+    Error(e) -> e
+    Ok(o) -> callback(o)
+  }
+}
+
+pub fn with_transaction(
+  conn: sqlight.Connection,
+  callback: fn() -> Result(wisp.Response, wisp.Response),
+) -> wisp.Response {
+  use _ <- lazy_unwrap_error(
+    sqlight.exec("BEGIN TRANSACTION", conn)
+    |> result.map_error(fn(_) {
+      server_response.internal_error("Failed to begin transaction")
+    }),
+  )
+
+  case callback() {
+    Error(e) -> {
+      use _ <- lazy_unwrap_error(
+        sqlight.exec("ROLLBACK TRANSACTION", conn)
+        |> result.map_error(fn(_) {
+          server_response.internal_error("Failed to rollback transaction")
+        }),
+      )
+      e
+    }
+    Ok(v) -> {
+      use _ <- lazy_unwrap_error(
+        sqlight.exec("COMMIT TRANSACTION", conn)
+        |> result.map_error(fn(_) {
+          server_response.internal_error("Failed to commit transaction")
+        }),
+      )
+      v
+    }
+  }
 }

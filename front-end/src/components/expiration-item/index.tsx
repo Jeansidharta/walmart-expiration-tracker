@@ -9,6 +9,7 @@ import { IconTrash } from "@tabler/icons-react";
 import { ButtonWithConfirmation } from "./button-with-confirmation";
 import { useDeleteExpiration } from "../../api";
 import { notifications } from "@mantine/notifications";
+import { productImageURL } from "../../utils/product-image-uri";
 
 export const ExpirationItem: FC<{
 	expirationItem: Item;
@@ -30,7 +31,11 @@ export const ExpirationItem: FC<{
 	return (
 		<Paper withBorder p="xs" w="100%">
 			<Group>
-				<ImageExpandable src={product.image} w={150} h={200} />
+				<ImageExpandable
+					src={productImageURL(product.barcode)}
+					w={150}
+					h={200}
+				/>
 				<Stack>
 					<Group>
 						<Text fw={700} tt="capitalize">
@@ -42,10 +47,10 @@ export const ExpirationItem: FC<{
 						Location: {expirationItem.location}
 						<MapModalButton value={expirationItem.location} />
 					</Group>
-					<Group>
+					<Stack gap={0}>
 						<Text>Expires {sAgo(expiration)}</Text>
 						<Text c="dimmed">({formatExpirationDate(expiration)})</Text>
-					</Group>
+					</Stack>
 					<ButtonWithConfirmation
 						isLoading={isLoading}
 						icon={<IconTrash style={{ width: 16, height: 16 }} />}

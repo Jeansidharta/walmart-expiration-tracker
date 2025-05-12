@@ -13,7 +13,8 @@ pub fn delete(barcode: String, conn: sqlight.Connection) {
       [sqlight.text(barcode)],
       decode.int,
     )
-    |> utils.sqlight_expect_one
+    |> utils.sqlight_extract_one()
+    |> utils.unwrap_error()
 
   use <- bool.lazy_guard(how_many_deleted == 0, fn() {
     server_response.error("Product now found")
