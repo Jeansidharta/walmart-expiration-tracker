@@ -26,7 +26,7 @@ pub fn list(
     option.None -> ""
   }
 
-  use pagination_query <- utils.query_params_extract_pagination(queries)
+  use pagination_query <- utils.query_params_sqlite(queries)
 
   let filters_query = case expired {
     option.Some(True) -> " WHERE Item.expires_at <= (unixepoch() * 1000)"

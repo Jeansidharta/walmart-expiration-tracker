@@ -11,7 +11,7 @@ pub fn get(
   conn: sqlight.Connection,
   queries: dict.Dict(String, String),
 ) -> wisp.Response {
-  use pagination <- utils.query_params_extract_pagination(queries)
+  use pagination <- utils.query_params_sqlite(queries)
   let sql = "SELECT " <> product.full_columns() <> " FROM Product" <> pagination
 
   use product <-

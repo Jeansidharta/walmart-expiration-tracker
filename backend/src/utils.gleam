@@ -94,7 +94,7 @@ pub fn extract_param_int(
 
 pub fn query_params_extract_pagination(
   queries: dict.Dict(String, String),
-  callback: fn(String) -> wisp.Response,
+  callback: fn(Int, option.Option(Int)) -> wisp.Response,
 ) -> wisp.Response {
   use page <- extract_param_int(queries, "page", fn() {
     server_response.error("Page query param must be a valid integer")
@@ -104,6 +104,15 @@ pub fn query_params_extract_pagination(
   use page_size <- extract_param_int(queries, "page_size", fn() {
     server_response.error("Page size query param must be a valid integer")
   })
+
+  callback(page, page_size)
+}
+
+pub fn query_params_sqlite(
+  queries: dict.Dict(String, String),
+  callback: fn(String) -> wisp.Response,
+) -> wisp.Response {
+  use page, page_size <- query_params_extract_pagination(queries)
 
   let sql_query_part = case page_size {
     option.Some(page_size) ->

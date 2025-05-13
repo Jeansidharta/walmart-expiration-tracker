@@ -1,3 +1,4 @@
+import gleam/dict
 import gleam/dynamic/decode
 import gleam/http
 import gleam/int
@@ -10,7 +11,12 @@ import sqlight
 import utils
 import wisp
 
-fn get(conn: sqlight.Connection, register_number: Int) {
+fn get(
+  conn: sqlight.Connection,
+  query: dict.Dict(String, String),
+  register_number: Int,
+) {
+  use page, page_size <- utils.query_params_extract_pagination(query)
   let query =
     "
 SELECT
@@ -48,44 +54,24 @@ ORDER BY LocationProduct.last_update ASC;
     )
     |> utils.sqlight_many()
 
-  let checked =
-    list.filter_map(result, fn(a) {
-      case a {
-        #(a, b, c, option.Some(v)) -> Ok(#(a, b, c, v))
-        #(_, _, _, option.None) -> Error(Nil)
-      }
-    })
-  let unchecked =
-    list.filter_map(result, fn(a) {
-      case a {
-        #(a, b, c, option.None) -> Ok(#(a, b, c))
-        #(_, _, _, option.Some(_)) -> Error(Nil)
-      }
-    })
+  let paginated_results =
+    result
+    |> list.drop(page * option.unwrap(page_size, 0))
+    |> list.take(option.unwrap(page_size, list.length(result)))
 
   server_response.success_200(
     "Success",
     json.object([
+      #("total_items", json.int(list.length(result))),
       #(
-        "checked",
-        json.array(checked, fn(arg) {
+        "products",
+        json.array(paginated_results, fn(arg) {
           let #(barcode, register_offset, name, last_update) = arg
           json.object([
             #("barcode", json.string(barcode)),
             #("register_offset", json.int(register_offset)),
             #("name", json.string(name)),
-            #("last_update", json.int(last_update)),
-          ])
-        }),
-      ),
-      #(
-        "unchecked",
-        json.array(unchecked, fn(arg) {
-          let #(barcode, register_offset, name) = arg
-          json.object([
-            #("barcode", json.string(barcode)),
-            #("register_offset", json.int(register_offset)),
-            #("name", json.string(name)),
+            #("last_update", json.nullable(last_update, json.int)),
           ])
         }),
       ),
@@ -98,6 +84,7 @@ pub fn router(
   conn: sqlight.Connection,
   path_segments: List(String),
 ) -> wisp.Response {
+  let query = wisp.get_query(req) |> dict.from_list()
   case path_segments, req.method {
     [register_number], http.Get -> {
       use register_number <-
@@ -107,7 +94,7 @@ pub fn router(
         })
         |> utils.unwrap_error()
 
-      get(conn, register_number)
+      get(conn, query, register_number)
     }
     _, _ -> wisp.not_found()
   }
