@@ -3,12 +3,12 @@ import { Loader, Text } from "@mantine/core";
 export function withLoader<T>(
 	isLoading: boolean,
 	data: null | T | undefined,
-	error: null | string,
+	error: null | Error,
 	withData: (data: T) => React.ReactNode,
 ) {
 	if (isLoading) return <Loader />;
 	if (!data) return null;
-	if (error) return <Text c="error">{error}</Text>;
+	if (error) return <Text c="error">{error.message}</Text>;
 	return withData(data);
 }
 

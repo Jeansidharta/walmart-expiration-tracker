@@ -68,7 +68,7 @@ export const ButtonWithConfirmation: FC<
 					onClick={handleTrash}
 					{...props}
 				>
-					Pull
+					{props.children}
 				</LoadingButton>
 			</Popover.Target>
 			<Popover.Dropdown>Are you sure?</Popover.Dropdown>

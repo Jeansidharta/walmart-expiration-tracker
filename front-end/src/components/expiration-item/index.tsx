@@ -6,10 +6,10 @@ import { ImageExpandable } from "../image-expandable";
 import { MapModalButton } from "../map-modal-button";
 import { formatExpirationDate } from "../../utils/format-date";
 import { IconTrash } from "@tabler/icons-react";
-import { ButtonWithConfirmation } from "./button-with-confirmation";
 import { useDeleteExpiration } from "../../api";
 import { notifications } from "@mantine/notifications";
 import { productImageURL } from "../../utils/product-image-uri";
+import { ButtonWithConfirmation } from "../button-with-confirmation";
 
 export const ExpirationItem: FC<{
 	expirationItem: Item;

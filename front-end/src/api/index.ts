@@ -25,7 +25,7 @@ export const usePost = <Body, Response>(method: string = "POST") => {
 				setState({ data: null, isLoading: true, error: null });
 				const res = await fetch(`${BASE_URL}/${path}`, {
 					method,
-					body: JSON.stringify(body),
+					body: body ? JSON.stringify(body) : undefined,
 					headers: { "Content-Type": "application/json" },
 				});
 				const data = await parseResponse<Response>(res);
@@ -43,6 +43,14 @@ export const useCreateExpiration = () => {
 	type Body = Omit<Item, "creation_date" | "id">;
 	const { post, ...a } = usePost<Body, Item>();
 	return { createExpiration: (body: Body) => post("item", body), ...a };
+};
+export const useUpdateLastCheckedExpiration = () => {
+	const { post, ...a } = usePost<null, Item>();
+	return {
+		updateLastCheckedExpiration: (barcode: string, location: string) =>
+			post(`product/${barcode}/location/${location}`, null),
+		...a,
+	};
 };
 export const useCreateProduct = () => {
 	type Body = Omit<Product, "created_at">;

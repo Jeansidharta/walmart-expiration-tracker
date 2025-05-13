@@ -1,12 +1,5 @@
 import { FC, useState } from "react";
-import {
-  Group,
-  NumberInput,
-  Pagination,
-  Paper,
-  Stack,
-  Title,
-} from "@mantine/core";
+import { Group, NumberInput, Pagination, Paper, Stack } from "@mantine/core";
 import useSWR from "swr";
 import { withLoader } from "../../utils/with-loader";
 import { Item, Product } from "../../models";

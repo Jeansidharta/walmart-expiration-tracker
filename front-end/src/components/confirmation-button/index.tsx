@@ -1,6 +1,6 @@
 import { FC, ReactNode } from "react";
 import { useDisclosure } from "@mantine/hooks";
-import { Button, Flex, Group, Modal, Stack, Title } from "@mantine/core";
+import { Button, Flex, Modal, Stack, Title } from "@mantine/core";
 
 export const ConfirmationButton: FC<{
 	buttonComponent: ReactNode;
