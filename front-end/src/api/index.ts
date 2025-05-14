@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Item, Product, ServerResponse } from "../models";
 import { BASE_URL } from "../constants";
+import useSWR from "swr";
+import { withLoader } from "../utils/with-loader";
 
 async function parseResponse<T = unknown>(res: Response) {
 	const json: ServerResponse<T> = await res.json();
@@ -72,3 +74,17 @@ export const useDeleteExpiration = () => {
 		...a,
 	};
 };
+
+export function useGetProduct(barcode?: null | string) {
+	type Response = {
+		product: Product;
+		items: Item[];
+	};
+	const { data, isLoading, error, ...others } = useSWR<Response>(
+		barcode && `product/${barcode}`,
+	);
+	return {
+		...others,
+		withProduct: (withLoader<Response>).bind(null, isLoading, data, error),
+	};
+}

@@ -16,6 +16,7 @@ import useSWR from "swr";
 import { withLoader } from "../utils/with-loader";
 import { useSearchParamWithDefault } from "../utils/use-search-param";
 import { productImageURL } from "../utils/product-image-uri";
+import { ProductBarcode } from "../components/product-barcode";
 
 const PAGE_SIZE = 10;
 
@@ -36,9 +37,12 @@ export const ProductsPage: FC = () => {
 					products.map((product) => (
 						<Paper key={product.barcode} withBorder p={16} w={180}>
 							<Stack gap={16} align="center" justify="space-between" h="100%">
-								<Text tt="capitalize" fw={700} ta="center">
-									{product.name}
-								</Text>
+								<Stack gap={0} align="center">
+									<Text tt="capitalize" fw={700} ta="center">
+										{product.name}
+									</Text>
+									<ProductBarcode barcode={product.barcode} />
+								</Stack>
 								<ImageExpandable
 									w={100}
 									src={productImageURL(product.barcode)}

@@ -28,7 +28,8 @@ pub fn get(barcode: String, conn: sqlight.Connection) -> wisp.Response {
           <> item.full_columns()
           <> " FROM Product "
           <> " JOIN Item ON product.barcode = item.product_barcode"
-          <> " WHERE product.barcode = ?;",
+          <> " WHERE product.barcode = ?"
+          <> " ORDER BY expires_at ASC;",
         conn,
         [sqlight.text(barcode)],
         item.decode_sqlight(),

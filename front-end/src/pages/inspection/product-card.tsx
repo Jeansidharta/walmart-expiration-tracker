@@ -1,9 +1,5 @@
 import { FC, ReactNode, useMemo } from "react";
 import { Item, Product } from "../../models";
-import {
-	getRegisterLocationOffset,
-	getRegisterViewbox,
-} from "./registers_viewbox";
 import { useForm } from "@mantine/form";
 import { formatExpirationDate } from "../../utils/format-date";
 import {
@@ -30,7 +26,6 @@ import { ImageExpandable } from "../../components/image-expandable";
 import { productImageURL } from "../../utils/product-image-uri";
 import { LoadingButton } from "../../components/loading-button";
 import { DateInput } from "@mantine/dates";
-import { Map } from "../../components/map";
 import {
 	IconCashRegister,
 	IconCurrentLocation,
@@ -38,6 +33,9 @@ import {
 	IconNewsOff,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
+import { ProductBarcode } from "../../components/product-barcode";
+import { RegisterMap } from "../../components/register-map";
+import { getRegisterLocationOffset } from "../../utils/register-offset";
 
 const ConfirmModal: FC<{
 	opened: boolean;
@@ -200,22 +198,17 @@ export const ShowProductCard: FC<{
 								w={200}
 								h={200}
 							/>
-							<Map
+							<RegisterMap
 								height={200}
 								preventScroll
-								viewbox={getRegisterViewbox(register)}
-								selectedShelf={location}
+								selectedOffset={register_offset}
+								register={register}
 							/>
 						</Flex>
 						<Flex gap={4} justify="space-between">
 							<Stack gap={0}>
 								{product.name && <Text>{product.name}</Text>}
-								<Text c="dimmed">
-									{product.barcode.substring(0, product.barcode.length - 4)}
-									<strong>
-										{product.barcode.substring(product.barcode.length - 4)}
-									</strong>
-								</Text>
+								<ProductBarcode barcode={product.barcode} />
 							</Stack>
 							<Menu shadow="md">
 								<Menu.Target>

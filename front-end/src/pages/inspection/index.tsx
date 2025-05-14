@@ -2,10 +2,10 @@ import { FC, useState } from "react";
 import { Group, NumberInput, Pagination, Paper, Stack } from "@mantine/core";
 import useSWR from "swr";
 import { withLoader } from "../../utils/with-loader";
-import { Item, Product } from "../../models";
 import { ShowProductCard } from "./product-card";
 import { RegisterProductItem } from "./register-product-item";
 import { useSearchParamWithDefault } from "../../utils/use-search-param";
+import { useGetProduct } from "../../api";
 
 type Response = {
 	products: {
@@ -33,20 +33,6 @@ function useRegisterProducts(register: null | number, page: number) {
 			data,
 			error,
 		),
-	};
-}
-
-function useGetProduct(barcode?: null | string) {
-	type Response = {
-		product: Product;
-		items: Item[];
-	};
-	const { data, isLoading, error, ...others } = useSWR<Response>(
-		barcode && `product/${barcode}`,
-	);
-	return {
-		...others,
-		withProduct: (withLoader<Response>).bind(null, isLoading, data, error),
 	};
 }
 

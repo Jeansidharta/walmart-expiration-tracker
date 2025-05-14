@@ -7,6 +7,7 @@ import { MainLayout } from "./layouts/main";
 import { BackLayout } from "./layouts/back";
 import { ProductsPage } from "./pages/products";
 import { InspectionPage } from "./pages/inspection";
+import { ProductPage } from "./pages/product/_barcode";
 
 const router = createBrowserRouter([
 	{
@@ -26,7 +27,11 @@ const router = createBrowserRouter([
 						Component: HomePage,
 					},
 					{
-						path: "product",
+						path: "/product/:product_barcode",
+						Component: ProductPage,
+					},
+					{
+						path: "/product",
 						Component: ProductsPage,
 					},
 				],
