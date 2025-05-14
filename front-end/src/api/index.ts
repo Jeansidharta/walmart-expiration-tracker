@@ -44,6 +44,14 @@ export const useCreateExpiration = () => {
 	const { post, ...a } = usePost<Body, Item>();
 	return { createExpiration: (body: Body) => post("item", body), ...a };
 };
+export const useRemoveProductFromRegister = () => {
+	const { post, ...a } = usePost<null, Item>("DELETE");
+	return {
+		removeProductFromRegister: (barcode: string, register: number) =>
+			post(`product/${barcode}/register/${register}`, null),
+		...a,
+	};
+};
 export const useUpdateLastCheckedExpiration = () => {
 	const { post, ...a } = usePost<null, Item>();
 	return {

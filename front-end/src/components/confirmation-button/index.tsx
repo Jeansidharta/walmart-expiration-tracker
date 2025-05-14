@@ -3,14 +3,14 @@ import { useDisclosure } from "@mantine/hooks";
 import { Button, Flex, Modal, Stack, Title } from "@mantine/core";
 
 export const ConfirmationButton: FC<{
-	buttonComponent: ReactNode;
 	modalMessage?: ReactNode;
 	onConfirm?: () => void;
-}> = ({ buttonComponent, modalMessage, onConfirm }) => {
+	children: ReactNode;
+}> = ({ children, modalMessage, onConfirm }) => {
 	const [isModalOpen, { open, close }] = useDisclosure();
 	return (
 		<>
-			<span onClick={open}>{buttonComponent}</span>
+			<span onClick={open}>{children}</span>
 			{isModalOpen && (
 				<Modal opened onClose={close}>
 					<Modal.Title>
