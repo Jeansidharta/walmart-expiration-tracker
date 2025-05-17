@@ -165,6 +165,13 @@ const REGISTERS_VIEWBOX: Record<
 		width: 113.071,
 		height: 117.725,
 		locations: [
+			"Z26-1",
+			"Z26-2",
+			"Z26-3",
+			"Z27-1",
+			"Z27-2",
+			"Z27-3",
+			"Z27-4",
 			"Z27-5",
 			"Z27-6",
 			"Z27-7",
@@ -173,13 +180,6 @@ const REGISTERS_VIEWBOX: Record<
 			"Z27-10",
 			"Z27-11",
 			"Z27-12",
-			"Z26-1",
-			"Z26-2",
-			"Z26-3",
-			"Z27-1",
-			"Z27-2",
-			"Z27-3",
-			"Z27-4",
 		],
 	},
 };
@@ -192,8 +192,8 @@ export function getRegisterLocationOffset(register: number, offset: number) {
 	return REGISTERS_VIEWBOX[register].locations[offset!];
 }
 
-export function getRegisterFromLocation(location: string) {
-	const val = Object.entries({
+export function getRegisterOffsetFromLocation(location: string) {
+	const register = Object.entries({
 		Z2: 1,
 		Z3: 1,
 
@@ -232,6 +232,15 @@ export function getRegisterFromLocation(location: string) {
 
 		Z26: 13,
 		Z27: 13,
-	}).find(([key]) => location.startsWith(key))?.[1];
-	return val;
+	}).find(([key]) => location.startsWith(key + "-"))?.[1];
+
+	if (register === undefined) return null;
+
+	const offset = REGISTERS_VIEWBOX[register].locations.findIndex(
+		(val) => val === location,
+	);
+
+	if (offset === -1) return null;
+
+	return [register, offset] as const;
 }

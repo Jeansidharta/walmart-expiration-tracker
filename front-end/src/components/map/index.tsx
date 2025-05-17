@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef } from "react";
+import { FC, useEffect, useId, useRef } from "react";
 import PlantSvg from "../../assets/plant.svg?raw";
 
 import style from "./styles.module.css";
@@ -50,6 +50,7 @@ export const Map: FC<{
 	shelvesToHighlight = [],
 	viewbox = BASE_VIEWBOX,
 }) => {
+		const id = useId();
 		const rootRef = useRef<HTMLDivElement | null>(null);
 		const [_selectedShelf, handleChange] = useUncontrolled({
 			value: selectedShelf,
@@ -103,10 +104,11 @@ export const Map: FC<{
 						width="100%"
 						height={`${height}px`}
 						className={style.map}
+						id={id}
 						dangerouslySetInnerHTML={{ __html: PlantSvg }}
 					/>
 					<style>
-						.{style.map} {"{"}
+						#{id} {"{"}
 						{highlight}
 						{"\n"}
 						{selector}

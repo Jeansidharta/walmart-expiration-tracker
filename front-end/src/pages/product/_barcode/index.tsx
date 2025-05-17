@@ -10,7 +10,12 @@ import {
 	Flex,
 } from "@mantine/core";
 import { useParams } from "react-router";
-import { useDeleteExpiration, useGetProduct } from "../../../api";
+import {
+	useDeleteExpiration,
+	useDeleteProductFromRegister,
+	useGetProduct,
+	useGetProductRegister,
+} from "../../../api";
 import { ImageExpandable } from "../../../components/image-expandable";
 import { productImageURL } from "../../../utils/product-image-uri";
 import Barcode from "react-barcode";
@@ -26,19 +31,23 @@ import {
 	IconTrash,
 } from "@tabler/icons-react";
 import { RegisterMap } from "../../../components/register-map";
-import { getRegisterFromLocation } from "../../../utils/register-offset";
+import { getRegisterOffsetFromLocation } from "../../../utils/register-offset";
+import { LoadingButton } from "../../../components/loading-button";
+import { AddPermanentRegisterButton } from "./add-permanent-register";
 
 export const ProductPage: FC = () => {
 	const { product_barcode } = useParams() as { product_barcode: string };
 
 	const { withProduct } = useGetProduct(product_barcode);
+	const { withProductRegister, mutate: mutateProductRegister } =
+		useGetProductRegister(product_barcode);
 
 	const isUPCA = product_barcode.length === 11;
 	return (
 		<Stack>
 			{withProduct(({ product, items }) => (
 				<>
-					<Title>{product.name}</Title>
+					<Title tt="capitalize">{product.name}</Title>
 					<Stack justify="center" align="center">
 						<ImageExpandable
 							w={400}
@@ -69,7 +78,25 @@ export const ProductPage: FC = () => {
 							<Accordion.Control icon={<IconCashRegister />}>
 								Permanent Registers
 							</Accordion.Control>
-							<Accordion.Panel></Accordion.Panel>
+							<Accordion.Panel>
+								<AddPermanentRegisterButton
+									onCreate={mutateProductRegister}
+									productBarcode={product_barcode}
+								/>
+								<Flex wrap="wrap" gap={16} justify="center">
+									{withProductRegister((productRegisters) =>
+										productRegisters.map(({ register_offset, register }) => (
+											<RegisterItem
+												onDelete={mutateProductRegister}
+												product_barcode={product_barcode}
+												register={register}
+												register_offset={register_offset}
+												key={register}
+											/>
+										)),
+									)}
+								</Flex>
+							</Accordion.Panel>
 						</Accordion.Item>
 						<Accordion.Item value="last-checks">
 							<Accordion.Control icon={<IconCheck />}>
@@ -81,6 +108,44 @@ export const ProductPage: FC = () => {
 				</>
 			))}
 		</Stack>
+	);
+};
+
+const RegisterItem: FC<{
+	product_barcode: string;
+	register: number;
+	register_offset: number;
+	onDelete?: () => void;
+}> = ({ register, product_barcode, register_offset, onDelete = () => { } }) => {
+	const { removeProductFromRegister, isLoading, error } =
+		useDeleteProductFromRegister();
+	async function handleDelete() {
+		await removeProductFromRegister(product_barcode, register);
+		notifications.show({
+			title: "Success!",
+			message: "Expiration successfully removed",
+			color: "green",
+		});
+		onDelete();
+	}
+	return (
+		<Paper withBorder p="xs" w={180}>
+			<Stack align="center">
+				<RegisterMap
+					height={150}
+					register={register}
+					selectedOffset={register_offset}
+				/>
+				<LoadingButton
+					isLoading={isLoading}
+					error={error?.message}
+					icon={<IconTrash style={{ width: 16, height: 16 }} />}
+					onClick={handleDelete}
+				>
+					Delete
+				</LoadingButton>
+			</Stack>
+		</Paper>
 	);
 };
 
@@ -100,7 +165,7 @@ const ExpirationItem: FC<{
 		});
 		onDelete();
 	}
-	const register = getRegisterFromLocation(expirationItem.location);
+	const register = getRegisterOffsetFromLocation(expirationItem.location);
 	return (
 		<Paper withBorder p="xs" w="100%">
 			<Flex>
@@ -108,7 +173,7 @@ const ExpirationItem: FC<{
 					<div style={{ width: 120 }}>
 						<RegisterMap
 							height={150}
-							register={register}
+							register={register[0]}
 							selectedShelf={expirationItem.location}
 						/>
 					</div>

@@ -46,7 +46,7 @@ export const useCreateExpiration = () => {
 	const { post, ...a } = usePost<Body, Item>();
 	return { createExpiration: (body: Body) => post("item", body), ...a };
 };
-export const useRemoveProductFromRegister = () => {
+export const useDeleteProductFromRegister = () => {
 	const { post, ...a } = usePost<null, Item>("DELETE");
 	return {
 		removeProductFromRegister: (barcode: string, register: number) =>
@@ -88,3 +88,36 @@ export function useGetProduct(barcode?: null | string) {
 		withProduct: (withLoader<Response>).bind(null, isLoading, data, error),
 	};
 }
+
+export function useGetProductRegister(barcode?: null | string) {
+	type Response = {
+		product_barcode: string;
+		register_offset: number;
+		register: number;
+	}[];
+	const { data, isLoading, error, ...others } = useSWR<Response>(
+		barcode && `product/${barcode}/register`,
+	);
+	return {
+		...others,
+		withProductRegister: (withLoader<Response>).bind(
+			null,
+			isLoading,
+			data,
+			error,
+		),
+	};
+}
+
+export const useCreatePermanentRegisterLocation = () => {
+	type Body = {
+		product_barcode: string;
+		register_offset: number;
+		register: number;
+	};
+	const { post, ...a } = usePost<Body, null>();
+	return {
+		createPermanentRegisterLocation: (body: Body) => post("register", body),
+		...a,
+	};
+};

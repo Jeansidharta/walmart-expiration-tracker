@@ -1,14 +1,15 @@
 import { TextInput } from "@mantine/core";
-import { FC } from "react";
+import { FC, ReactNode } from "react";
 import { useUncontrolled } from "@mantine/hooks";
 import { MapModalButton } from "../map-modal-button";
 
 export const LocationSelectorField: FC<{
 	onChange?: (newState: string) => void;
 	value?: string;
+	inputString?: string;
 	shelvesToHighlight?: string[];
-	error?: string | null;
-}> = ({ value, onChange, error, shelvesToHighlight }) => {
+	error?: ReactNode | null;
+}> = ({ value, onChange, error, shelvesToHighlight, inputString }) => {
 	const [selectedShelf, handleChange] = useUncontrolled({
 		value,
 		finalValue: "",
@@ -18,7 +19,7 @@ export const LocationSelectorField: FC<{
 	return (
 		<TextInput
 			label="Shelf Location"
-			value={selectedShelf}
+			value={inputString ?? selectedShelf}
 			error={error}
 			rightSection={
 				<MapModalButton

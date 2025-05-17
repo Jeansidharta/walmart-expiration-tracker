@@ -4,7 +4,7 @@ import { useForm } from "@mantine/form";
 import { formatExpirationDate } from "../../utils/format-date";
 import {
 	useCreateExpiration,
-	useRemoveProductFromRegister,
+	useDeleteProductFromRegister,
 	useUpdateLastCheckedExpiration,
 } from "../../api";
 import {
@@ -83,7 +83,7 @@ const ConfirmRemoveProductFromRegister: FC<{
 	onSubmit: () => void;
 }> = ({ opened, onClose, barcode, register, onSubmit }) => {
 	const { removeProductFromRegister, isLoading, error } =
-		useRemoveProductFromRegister();
+		useDeleteProductFromRegister();
 
 	return (
 		<ConfirmModal
