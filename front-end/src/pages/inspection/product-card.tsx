@@ -1,10 +1,10 @@
 import { FC, ReactNode, useMemo } from "react";
-import { Item, Product } from "../../models";
+import { Expiration, Product } from "../../models";
 import { useForm } from "@mantine/form";
 import { formatExpirationDate } from "../../utils/format-date";
 import {
 	useCreateExpiration,
-	useDeleteProductFromRegister,
+	useDeleteProductLocation,
 	useUpdateLastCheckedExpiration,
 } from "../../api";
 import {
@@ -23,6 +23,7 @@ import {
 	useModalsStack,
 } from "@mantine/core";
 import { ImageExpandable } from "../../components/image-expandable";
+import { Map } from "../../components/map";
 import { productImageURL } from "../../utils/product-image-uri";
 import { LoadingButton } from "../../components/loading-button";
 import { DateInput } from "@mantine/dates";
@@ -35,7 +36,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { ProductBarcode } from "../../components/product-barcode";
 import { RegisterMap } from "../../components/register-map";
-import { getRegisterLocationOffset } from "../../utils/register-offset";
+import { getRegisterOffsetFromLocation } from "../../utils/register-offset";
 
 const ConfirmModal: FC<{
 	opened: boolean;
@@ -79,11 +80,11 @@ const ConfirmRemoveProductFromRegister: FC<{
 	opened: boolean;
 	onClose: () => void;
 	barcode: string;
-	register: number;
+	location: string;
 	onSubmit: () => void;
-}> = ({ opened, onClose, barcode, register, onSubmit }) => {
-	const { removeProductFromRegister, isLoading, error } =
-		useDeleteProductFromRegister();
+}> = ({ opened, onClose, barcode, location, onSubmit }) => {
+	const { deleteProductLocation, isLoading, error } =
+		useDeleteProductLocation();
 
 	return (
 		<ConfirmModal
@@ -91,10 +92,10 @@ const ConfirmRemoveProductFromRegister: FC<{
 			opened={opened}
 			title="Remove From Register"
 			onConfirm={async () => {
-				await removeProductFromRegister(barcode, register);
+				await deleteProductLocation(barcode, location);
 				notifications.show({
 					title: "Success!",
-					message: `Successfuly removed product from register ${register}`,
+					message: `Successfuly removed product from location ${location}`,
 					color: "green",
 				});
 				onClose();
@@ -138,16 +139,14 @@ const ConfirmUpdateCheckDate: FC<{
 
 export const ShowProductCard: FC<{
 	product: Product;
-	items: Item[];
-	register: number;
-	register_offset: number;
+	expirations: (Expiration & { location: string })[];
+	location: string;
 	onMutate?: () => void;
 	onUnselect?: () => void;
 }> = ({
 	product,
-	items,
-	register,
-	register_offset,
+	expirations,
+	location,
 	onMutate = () => { },
 	onUnselect = () => { },
 }) => {
@@ -155,10 +154,10 @@ export const ShowProductCard: FC<{
 			"confirm-update-check-date",
 			"confirm-remove-from-register",
 		]);
-		const location = getRegisterLocationOffset(register, register_offset);
+		const regOffset = getRegisterOffsetFromLocation(location);
 		const itemsAtThisLocation = useMemo(
-			() => items.filter((item) => item.location === location),
-			[location, items],
+			() => expirations.filter((expiration) => expiration.location === location),
+			[location, expirations],
 		);
 
 		const form = useForm<{ expirationDate: string }>({
@@ -198,12 +197,17 @@ export const ShowProductCard: FC<{
 								w={200}
 								h={200}
 							/>
-							<RegisterMap
-								height={200}
-								preventScroll
-								selectedOffset={register_offset}
-								register={register}
-							/>
+
+							{regOffset ? (
+								<RegisterMap
+									height={200}
+									preventScroll
+									selectedShelf={location}
+									register={regOffset[0]}
+								/>
+							) : (
+								<Map selectedShelf={location} />
+							)}
 						</Flex>
 						<Flex gap={4} justify="space-between">
 							<Stack gap={0}>
@@ -282,7 +286,7 @@ export const ShowProductCard: FC<{
 					<ConfirmRemoveProductFromRegister
 						opened={stack.state["confirm-remove-from-register"]}
 						barcode={product.barcode}
-						register={register}
+						location={location}
 						onClose={stack.closeAll}
 						onSubmit={() => {
 							onMutate();

@@ -1,6 +1,6 @@
+import expiration/expiration_router.{router as expiration_router}
 import gleam/erlang
 import gleam/erlang/process
-import item/item
 import migrant
 import mist
 import product/product_router.{router as product_router}
@@ -9,16 +9,6 @@ import server_response
 import sqlight
 import wisp
 import wisp/wisp_mist
-
-pub type Item {
-  Item(
-    id: Int,
-    creation_date: Int,
-    location: String,
-    expires_at: Int,
-    count: Int,
-  )
-}
 
 pub fn middleware(
   request: wisp.Request,
@@ -38,7 +28,7 @@ pub fn request_handler(
   use req <- middleware(req)
   case wisp.path_segments(req) {
     ["product", ..path] -> product_router(req, conn, path)
-    ["item", ..path] -> item.router(req, conn, path)
+    ["expiration", ..path] -> expiration_router(req, conn, path)
     ["register", ..path] -> register_router(req, conn, path)
     _ -> server_response.error_with_code("Invalid API Rest Path", 404)
   }

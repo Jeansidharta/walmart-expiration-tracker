@@ -1,6 +1,5 @@
 import { FC } from "react";
 import { NavLink } from "react-router";
-import { Item, Product } from "../models";
 import {
 	Button,
 	Divider,
@@ -10,9 +9,8 @@ import {
 	Title,
 } from "@mantine/core";
 import { ExpirationItem } from "../components/expiration-item";
-import useSWR from "swr";
-import { withLoader } from "../utils/with-loader";
 import { useSearchParamWithDefault } from "../utils/use-search-param";
+import { useGetExpirations } from "../api";
 
 const PAGE_SIZE = 10;
 
@@ -23,16 +21,11 @@ export const HomePage: FC = () => {
 		false,
 	);
 	const [page, setPage] = useSearchParamWithDefault("page", Number.parseInt, 1);
-	const {
-		data,
-		isLoading: isLoadingItems,
-		error: itemsError,
-		mutate,
-	} = useSWR<{
-		items: Item[];
-		products: Record<string, Product>;
-		total_items: number;
-	}>(`item?expired=${expired}&page=${page - 1}&page_size=${PAGE_SIZE}`);
+	const { withExpirations, mutate, data } = useGetExpirations(
+		page,
+		PAGE_SIZE,
+		expired,
+	);
 
 	return (
 		<Stack>
@@ -47,12 +40,13 @@ export const HomePage: FC = () => {
 				checked={expired}
 			/>
 			<Stack gap={8} align="center">
-				{withLoader(isLoadingItems, data, itemsError, ({ items, products }) =>
-					items.map((item) => (
+				{withExpirations(({ expirations }) =>
+					expirations.map(({ expiration, product, location }) => (
 						<ExpirationItem
-							key={item.id}
-							expirationItem={item}
-							product={products[item.product_barcode]}
+							key={expiration.id}
+							expiration={expiration}
+							product={product}
+							location={location}
 							onDelete={mutate}
 						/>
 					)),

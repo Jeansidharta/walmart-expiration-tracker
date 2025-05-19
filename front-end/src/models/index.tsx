@@ -6,10 +6,9 @@ export type Product = {
 	name?: string | null | undefined;
 };
 
-export type Item = {
+export type Expiration = {
 	id: number;
 	creation_date: number;
-	product_barcode: string;
-	location: string;
+	product_location_id: number;
 	expires_at: number;
 };

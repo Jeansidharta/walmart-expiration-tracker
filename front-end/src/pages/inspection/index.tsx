@@ -10,7 +10,7 @@ import { useGetProduct } from "../../api";
 type Response = {
 	products: {
 		barcode: string;
-		register_offset: number;
+		location: string;
 		name: string;
 		last_update?: number;
 	}[];
@@ -37,13 +37,17 @@ function useRegisterProducts(register: null | number, page: number) {
 }
 
 export const InspectionPage: FC = () => {
-	const [register, setRegister] = useState<number | null>(null);
+	const [register, setRegister] = useSearchParamWithDefault<number | null>(
+		"register",
+		(val) => (val ? Number(val) : null),
+		null,
+	);
 
 	const [page, setPage] = useSearchParamWithDefault(`page`, Number.parseInt, 1);
 	const [selectedProduct, setSelectedProduct] = useState<{
 		barcode: string;
 		last_update?: number;
-		register_offset: number;
+		location: string;
 	} | null>(null);
 	const { withRegisterProducts, mutate: mutateRegisterProducts } =
 		useRegisterProducts(register, page);
@@ -67,13 +71,12 @@ export const InspectionPage: FC = () => {
 				withRegisterProducts(({ products, total_items }) => (
 					<>
 						{withProduct(
-							({ items, product }) =>
+							({ expirations, product }) =>
 								selectedProduct && (
 									<ShowProductCard
 										product={product}
-										register={register!}
-										register_offset={selectedProduct!.register_offset}
-										items={items}
+										location={selectedProduct.location}
+										expirations={expirations}
 										onUnselect={() => setSelectedProduct(null)}
 										onMutate={() => {
 											mutateRegisterProducts();
@@ -87,7 +90,7 @@ export const InspectionPage: FC = () => {
 								<RegisterProductItem
 									onClick={() => setSelectedProduct(product)}
 									isSelected={product.barcode === selectedProduct?.barcode}
-									key={product.barcode}
+									key={product.barcode + product.location}
 									product={product}
 								/>
 							))}

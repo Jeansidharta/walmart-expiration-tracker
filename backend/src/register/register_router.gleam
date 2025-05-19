@@ -1,123 +1,13 @@
 import gleam/dict
-import gleam/dynamic/decode
 import gleam/http
 import gleam/int
-import gleam/json
-import gleam/list
-import gleam/option
 import gleam/result
+import register/get.{get}
+import register/post.{post}
 import server_response
 import sqlight
 import utils
 import wisp
-
-fn post(req: wisp.Request, conn: sqlight.Connection) {
-  use body <- wisp.require_json(req)
-  use #(product_barcode, register_offset, register) <-
-    body
-    |> decode.run({
-      use product_barcode <- decode.field("product_barcode", decode.string)
-      use register_offset <- decode.field("register_offset", decode.int)
-      use register <- decode.field("register", decode.int)
-      decode.success(#(product_barcode, register_offset, register))
-    })
-    |> result.map_error(utils.decode_err_server_response)
-    |> utils.unwrap_error()
-
-  use _ <-
-    sqlight.query(
-      "
-INSERT INTO PermanentProductLocation
-  (product_barcode register register_offset)
-VALUES (?, ?, ?)
-RETURNING register
-",
-      conn,
-      [
-        sqlight.text(product_barcode),
-        sqlight.int(register),
-        sqlight.int(register_offset),
-      ],
-      decode.at([0], decode.int),
-    )
-    |> utils.sqlight_extract_one()
-    |> result.map_error(fn(_) {
-      server_response.error(
-        "Could not create PermanentProductLocation. Does one already exists for this register?",
-      )
-    })
-    |> utils.unwrap_error()
-
-  server_response.success_200("Success!", json.null())
-}
-
-fn get(
-  conn: sqlight.Connection,
-  query: dict.Dict(String, String),
-  register_number: Int,
-) {
-  use page, page_size <- utils.query_params_extract_pagination(query)
-  let query =
-    "
-SELECT
-	product.barcode,
-	PermanentProductLocation.register_offset,
-	product.name,
-	LocationProduct.last_update
-FROM PermanentProductLocation
-LEFT JOIN Product ON PermanentProductLocation.product_barcode = product.barcode
-LEFT JOIN (
-    SELECT last_update, product_barcode
-    FROM LocationProduct
-    JOIN Location ON LocationProduct.location = Location.location
-    WHERE register = ?1
-) as LocationProduct ON LocationProduct.product_barcode = product.barcode
-WHERE PermanentProductLocation.register = ?1
-AND PermanentProductLocation.register_offset IN (
-    SELECT register_offset FROM Location WHERE Location.register = ?1
-)
-ORDER BY LocationProduct.last_update ASC;
-"
-
-  use result <-
-    sqlight.query(
-      query,
-      conn,
-      with: [sqlight.int(register_number)],
-      expecting: {
-        use barcode <- decode.field(0, decode.string)
-        use register_offset <- decode.field(1, decode.int)
-        use name <- decode.field(2, decode.string)
-        use last_update <- decode.field(3, decode.optional(decode.int))
-        decode.success(#(barcode, register_offset, name, last_update))
-      },
-    )
-    |> utils.sqlight_many()
-
-  let paginated_results =
-    result
-    |> list.drop(page * option.unwrap(page_size, 0))
-    |> list.take(option.unwrap(page_size, list.length(result)))
-
-  server_response.success_200(
-    "Success",
-    json.object([
-      #("total_items", json.int(list.length(result))),
-      #(
-        "products",
-        json.array(paginated_results, fn(arg) {
-          let #(barcode, register_offset, name, last_update) = arg
-          json.object([
-            #("barcode", json.string(barcode)),
-            #("register_offset", json.int(register_offset)),
-            #("name", json.string(name)),
-            #("last_update", json.nullable(last_update, json.int)),
-          ])
-        }),
-      ),
-    ]),
-  )
-}
 
 pub fn router(
   req: wisp.Request,

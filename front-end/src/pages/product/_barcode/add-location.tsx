@@ -6,16 +6,16 @@ import { getRegisterOffsetFromLocation } from "../../../utils/register-offset";
 import { useForm } from "@mantine/form";
 import { IconPlus } from "@tabler/icons-react";
 import { LocationSelectorField } from "../../../components/location-selector-field";
-import { useCreatePermanentRegisterLocation } from "../../../api";
+import { useCreateProductLocation } from "../../../api";
 import { notifications } from "@mantine/notifications";
 
-export const AddPermanentRegisterButton: FC<{
+export const AddLocation: FC<{
 	productBarcode: string;
 	onCreate: () => void;
 }> = ({ productBarcode, onCreate }) => {
 	const [opened, { open, close }] = useDisclosure(false);
-	const { createPermanentRegisterLocation, isLoading, error } =
-		useCreatePermanentRegisterLocation();
+	const { createProductLocation, isLoading, error } =
+		useCreateProductLocation();
 
 	const form = useForm<{ location: string }>({
 		initialValues: { location: "" },
@@ -29,15 +29,8 @@ export const AddPermanentRegisterButton: FC<{
 		},
 	});
 
-	const regOffset = getRegisterOffsetFromLocation(form.values.location);
-
 	async function handleSubmit(values: { location: string }) {
-		const [register, offset] = getRegisterOffsetFromLocation(values.location)!;
-		await createPermanentRegisterLocation({
-			product_barcode: productBarcode,
-			register,
-			register_offset: offset,
-		});
+		await createProductLocation(productBarcode, values.location);
 		notifications.show({
 			title: "Success!",
 			message: "Permanent Register Location Created!",
@@ -49,21 +42,12 @@ export const AddPermanentRegisterButton: FC<{
 	return (
 		<>
 			<LoadingButton w="100%" onClick={open}>
-				Add Permanent Register
+				Add Location
 			</LoadingButton>
 			<Modal opened={opened} onClose={close}>
 				<form onSubmit={form.onSubmit(handleSubmit)}>
 					<Stack gap={16}>
-						<LocationSelectorField
-							inputString={
-								form.values.location
-									? regOffset
-										? `Register: ${regOffset[0]}, Offset: ${regOffset[1]}`
-										: "Invalid location: not assigned to register"
-									: undefined
-							}
-							{...form.getInputProps("location")}
-						/>
+						<LocationSelectorField {...form.getInputProps("location")} />
 						<LoadingButton
 							type="submit"
 							isLoading={isLoading}

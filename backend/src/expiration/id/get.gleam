@@ -1,5 +1,5 @@
 import gleam/json
-import models/item
+import models/expiration
 import sqlight
 import utils
 import wisp
@@ -7,15 +7,15 @@ import wisp
 pub fn get(id: Int, conn: sqlight.Connection) -> wisp.Response {
   use item <-
     sqlight.query(
-      "SELECT " <> item.full_columns() <> " FROM item WHERE id = ?;",
+      "SELECT " <> expiration.full_columns() <> " FROM item WHERE id = ?;",
       conn,
       [sqlight.int(id)],
-      item.decode_sqlight(),
+      expiration.decode_sqlight(),
     )
     |> utils.sqlight_many
 
   let response =
-    json.array(item, item.json)
+    json.array(item, expiration.json)
     |> json.to_string_tree
 
   wisp.response(201)

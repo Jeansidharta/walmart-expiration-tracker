@@ -46,17 +46,20 @@ pub fn sqlight_many(val: Result(List(value), sqlight.Error)) {
 }
 
 pub fn sqlight_try_one(val: Result(List(value), sqlight.Error)) {
-  val
-  |> result.try_recover(fn(err) {
-    wisp.log_error(err.message)
-    Error(server_response.internal_error("Failed to extract one"))
-  })
-  |> result.map(fn(a) { list.first(a) |> option.from_result })
+  case val {
+    Error(err) -> {
+      wisp.log_error(err.message)
+      Error(server_response.sqlight_error(err))
+    }
+    Ok(a) -> {
+      Ok(list.first(a) |> option.from_result)
+    }
+  }
 }
 
 pub fn sqlight_extract_one(val: Result(List(value), sqlight.Error)) {
   sqlight_try_one(val)
-  |> result.then(fn(v) {
+  |> result.try(fn(v) {
     option.to_result(v, server_response.internal_error("Failed to extract one"))
   })
 }

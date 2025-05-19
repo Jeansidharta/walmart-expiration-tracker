@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router";
 
-export function useSearchParam<T extends { toString: () => string }>(
+export function useSearchParam<T extends { toString: () => string } | null>(
 	paramName: string,
 	parseValue: (val: string) => T,
 ) {
@@ -11,13 +11,17 @@ export function useSearchParam<T extends { toString: () => string }>(
 		param,
 		(newValue: T) => {
 			const newParams = new URLSearchParams(searchParams);
-			newParams.set(paramName, newValue.toString());
+			if (newValue === null) {
+				newParams.delete(paramName);
+			} else {
+				newParams.set(paramName, newValue.toString());
+			}
 			setSearchParams(newParams);
 		},
 	] as const;
 }
 
-export function useSearchParamWithDefault<T extends { toString: () => string }>(
+export function useSearchParamWithDefault<T extends { toString: () => string } | null>(
 	paramName: string,
 	parseValue: (val: string) => T,
 	defaultValue: T,

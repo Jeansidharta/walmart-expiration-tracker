@@ -4,7 +4,7 @@ import { Loader, Stack, Title, Text, Card, Badge, Group } from "@mantine/core";
 import { SelectProduct } from "../components/upc-input";
 import { NewProductButton } from "../components/new-product-button";
 import useSWR from "swr";
-import { Item, Product } from "../models";
+import { Expiration, Product } from "../models";
 import { DateInput } from "@mantine/dates";
 import { LocationSelectorField } from "../components/location-selector-field";
 import { useCreateExpiration } from "../api";
@@ -51,7 +51,7 @@ export function RegisterExpirationPage() {
 		mutate,
 	} = useSWR<{
 		product: Product;
-		items: Item[];
+		expirations: (Expiration & { location: string })[];
 	}>(productUpc && `product/${productUpc}`, {
 		shouldRetryOnError: false,
 	});
@@ -79,11 +79,15 @@ export function RegisterExpirationPage() {
 
 	const datesRegistered: string[] | undefined = useMemo(
 		() =>
-			data?.items
-				.filter((item) => item.location === form.values.selectedShelf)
+			data?.expirations
+				.filter(
+					(expiration) => expiration.location === form.values.selectedShelf,
+				)
 				.sort((left, right) => left.expires_at - right.expires_at)
-				.map((item) => formatExpirationDate(new Date(item.expires_at))) ?? [],
-		[data?.items, form.values.selectedShelf],
+				.map((expiration) =>
+					formatExpirationDate(new Date(expiration.expires_at)),
+				) ?? [],
+		[data?.expirations, form.values.selectedShelf],
 	);
 
 	return (
@@ -124,7 +128,9 @@ export function RegisterExpirationPage() {
 						}}
 					>
 						<LocationSelectorField
-							shelvesToHighlight={data?.items.map((item) => item.location)}
+							shelvesToHighlight={data?.expirations.map(
+								(expiration) => expiration.location,
+							)}
 							{...form.getInputProps("selectedShelf")}
 						/>
 						<Group

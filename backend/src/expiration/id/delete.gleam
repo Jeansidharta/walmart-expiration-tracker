@@ -1,7 +1,7 @@
 import gleam/bool
+import gleam/dynamic/decode
 import gleam/json
 import gleam/option
-import models/item
 import server_response
 import sqlight
 import utils
@@ -9,10 +9,10 @@ import utils
 pub fn delete(id: Int, conn: sqlight.Connection) {
   use item <-
     sqlight.query(
-      "DELETE FROM Item WHERE id = ? RETURNING *;",
+      "DELETE FROM Expiration WHERE id = ? RETURNING id",
       conn,
       [sqlight.int(id)],
-      item.decode_sqlight(),
+      decode.at([0], decode.optional(decode.int)),
     )
     |> utils.sqlight_try_one()
     |> utils.unwrap_error()

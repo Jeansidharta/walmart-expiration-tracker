@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Item, Product, ServerResponse } from "../models";
+import { Expiration, Product, ServerResponse } from "../models";
 import { BASE_URL } from "../constants";
 import useSWR from "swr";
 import { withLoader } from "../utils/with-loader";
@@ -42,20 +42,20 @@ export const usePost = <Body, Response>(method: string = "POST") => {
 };
 
 export const useCreateExpiration = () => {
-	type Body = Omit<Item, "creation_date" | "id">;
-	const { post, ...a } = usePost<Body, Item>();
-	return { createExpiration: (body: Body) => post("item", body), ...a };
+	type Body = { location: string; product_barcode: string; expires_at: number };
+	const { post, ...a } = usePost<Body, Expiration>();
+	return { createExpiration: (body: Body) => post("expiration", body), ...a };
 };
-export const useDeleteProductFromRegister = () => {
-	const { post, ...a } = usePost<null, Item>("DELETE");
+export const useDeleteProductLocation = () => {
+	const { post, ...a } = usePost<null, Expiration>("DELETE");
 	return {
-		removeProductFromRegister: (barcode: string, register: number) =>
-			post(`product/${barcode}/register/${register}`, null),
+		deleteProductLocation: (barcode: string, location: string) =>
+			post(`product/${barcode}/location/${location}`, null),
 		...a,
 	};
 };
 export const useUpdateLastCheckedExpiration = () => {
-	const { post, ...a } = usePost<null, Item>();
+	const { post, ...a } = usePost<null, Expiration>("PATCH");
 	return {
 		updateLastCheckedExpiration: (barcode: string, location: string) =>
 			post(`product/${barcode}/location/${location}`, null),
@@ -68,17 +68,40 @@ export const useCreateProduct = () => {
 	return { createProduct: (body: Body) => post("product", body), ...a };
 };
 export const useDeleteExpiration = () => {
-	const { post, ...a } = usePost<object, Item>("DELETE");
+	const { post, ...a } = usePost<object, Expiration>("DELETE");
 	return {
-		deleteExpiration: (id: number) => post(`item/${id}`, {}),
+		deleteExpiration: (id: number) => post(`expiration/${id}`, {}),
 		...a,
 	};
 };
 
+export function useGetExpirations(
+	page: number = 1,
+	pageSize?: number,
+	expired: boolean = false,
+) {
+	type Response = {
+		expirations: {
+			expiration: Expiration;
+			product: Product;
+			location: string;
+		}[];
+		total_items: number;
+	};
+	const { data, isLoading, error, ...others } = useSWR<Response>(
+		`expiration?expired=${expired}&page=${page - 1}${pageSize ? `&page_size=${pageSize}` : ""}`,
+	);
+	return {
+		...others,
+		data,
+		withExpirations: (withLoader<Response>).bind(null, isLoading, data, error),
+	};
+}
+
 export function useGetProduct(barcode?: null | string) {
 	type Response = {
 		product: Product;
-		items: Item[];
+		expirations: (Expiration & { location: string })[];
 	};
 	const { data, isLoading, error, ...others } = useSWR<Response>(
 		barcode && `product/${barcode}`,
@@ -89,18 +112,17 @@ export function useGetProduct(barcode?: null | string) {
 	};
 }
 
-export function useGetProductRegister(barcode?: null | string) {
+export function useGetProductLocation(barcode?: null | string) {
 	type Response = {
-		product_barcode: string;
-		register_offset: number;
-		register: number;
+		location: string;
+		last_update: number | null;
 	}[];
 	const { data, isLoading, error, ...others } = useSWR<Response>(
-		barcode && `product/${barcode}/register`,
+		barcode && `product/${barcode}/location`,
 	);
 	return {
 		...others,
-		withProductRegister: (withLoader<Response>).bind(
+		withProductLocation: (withLoader<Response>).bind(
 			null,
 			isLoading,
 			data,
@@ -109,15 +131,11 @@ export function useGetProductRegister(barcode?: null | string) {
 	};
 }
 
-export const useCreatePermanentRegisterLocation = () => {
-	type Body = {
-		product_barcode: string;
-		register_offset: number;
-		register: number;
-	};
-	const { post, ...a } = usePost<Body, null>();
+export const useCreateProductLocation = () => {
+	const { post, ...a } = usePost<{ last_update: null }, Expiration>();
 	return {
-		createPermanentRegisterLocation: (body: Body) => post("register", body),
+		createProductLocation: (barcode: string, location: string) =>
+			post(`product/${barcode}/location/${location}`, { last_update: null }),
 		...a,
 	};
 };

@@ -8,7 +8,7 @@ import { formatExpirationDate } from "../../utils/format-date";
 export const RegisterProductItem: FC<{
 	product: {
 		barcode: string;
-		register_offset: number;
+		location: string;
 		name: string;
 		last_update?: number;
 	};

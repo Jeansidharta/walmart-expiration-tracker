@@ -1,11 +1,10 @@
+import expiration/id/expiration_id_router.{router as expiration_id_router}
+import expiration/list.{list}
+import expiration/post.{post}
 import gleam/dict
 import gleam/http
 import gleam/int
 import gleam/result
-import item/delete.{delete}
-import item/get.{get}
-import item/list.{list}
-import item/post.{post}
 import server_response
 import sqlight
 import utils
@@ -20,18 +19,14 @@ pub fn router(
   case path_segments, req.method {
     [], http.Get -> list(conn, queries)
     [], http.Post -> post(req, conn)
-    [id], method -> {
+    [id, ..rest], _ -> {
       use id <-
         int.parse(id)
         |> result.map_error(fn(_) {
           server_response.error("Invalid id: " <> id)
         })
         |> utils.unwrap_error()
-      case method {
-        http.Get -> get(id, conn)
-        http.Delete -> delete(id, conn)
-        _ -> wisp.not_found()
-      }
+      expiration_id_router(req, conn, rest, id)
     }
     _, _ -> wisp.not_found()
   }

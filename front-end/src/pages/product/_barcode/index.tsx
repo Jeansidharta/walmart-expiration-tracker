@@ -12,15 +12,15 @@ import {
 import { useParams } from "react-router";
 import {
 	useDeleteExpiration,
-	useDeleteProductFromRegister,
+	useDeleteProductLocation,
 	useGetProduct,
-	useGetProductRegister,
+	useGetProductLocation,
 } from "../../../api";
 import { ImageExpandable } from "../../../components/image-expandable";
 import { productImageURL } from "../../../utils/product-image-uri";
 import Barcode from "react-barcode";
 import { appendUpcCheksum } from "../../../utils/upc";
-import { Item } from "../../../models";
+import { Expiration } from "../../../models";
 import { notifications } from "@mantine/notifications";
 import { formatExpirationDate } from "../../../utils/format-date";
 import { ButtonWithConfirmation } from "../../../components/button-with-confirmation";
@@ -33,19 +33,19 @@ import {
 import { RegisterMap } from "../../../components/register-map";
 import { getRegisterOffsetFromLocation } from "../../../utils/register-offset";
 import { LoadingButton } from "../../../components/loading-button";
-import { AddPermanentRegisterButton } from "./add-permanent-register";
+import { AddLocation as AddLocation } from "./add-location";
 
 export const ProductPage: FC = () => {
 	const { product_barcode } = useParams() as { product_barcode: string };
 
-	const { withProduct } = useGetProduct(product_barcode);
-	const { withProductRegister, mutate: mutateProductRegister } =
-		useGetProductRegister(product_barcode);
+	const { withProduct, mutate: mutateProduct } = useGetProduct(product_barcode);
+	const { withProductLocation, mutate: mutateProductRegister } =
+		useGetProductLocation(product_barcode);
 
 	const isUPCA = product_barcode.length === 11;
 	return (
 		<Stack>
-			{withProduct(({ product, items }) => (
+			{withProduct(({ product, expirations }) => (
 				<>
 					<Title tt="capitalize">{product.name}</Title>
 					<Stack justify="center" align="center">
@@ -69,29 +69,34 @@ export const ProductPage: FC = () => {
 								Expirations
 							</Accordion.Control>
 							<Accordion.Panel>
-								{items.map((item) => (
-									<ExpirationItem expirationItem={item} key={item.id} />
+								{expirations.map(({ location, ...expiration }) => (
+									<ExpirationItem
+										expirationItem={expiration}
+										location={location}
+										onDelete={mutateProduct}
+										key={expiration.id}
+									/>
 								))}
 							</Accordion.Panel>
 						</Accordion.Item>
 						<Accordion.Item value="registers">
 							<Accordion.Control icon={<IconCashRegister />}>
-								Permanent Registers
+								Locations
 							</Accordion.Control>
 							<Accordion.Panel>
-								<AddPermanentRegisterButton
+								<AddLocation
 									onCreate={mutateProductRegister}
 									productBarcode={product_barcode}
 								/>
 								<Flex wrap="wrap" gap={16} justify="center">
-									{withProductRegister((productRegisters) =>
-										productRegisters.map(({ register_offset, register }) => (
-											<RegisterItem
+									{withProductLocation((productLocations) =>
+										productLocations.map(({ location, last_update }) => (
+											<LocationItem
 												onDelete={mutateProductRegister}
+												location={location}
+												lastUpdate={last_update}
 												product_barcode={product_barcode}
-												register={register}
-												register_offset={register_offset}
-												key={register}
+												key={location}
 											/>
 										)),
 									)}
@@ -111,16 +116,16 @@ export const ProductPage: FC = () => {
 	);
 };
 
-const RegisterItem: FC<{
+const LocationItem: FC<{
 	product_barcode: string;
-	register: number;
-	register_offset: number;
+	location: string;
+	lastUpdate: number | null;
 	onDelete?: () => void;
-}> = ({ register, product_barcode, register_offset, onDelete = () => { } }) => {
-	const { removeProductFromRegister, isLoading, error } =
-		useDeleteProductFromRegister();
+}> = ({ product_barcode, lastUpdate, location, onDelete = () => { } }) => {
+	const { deleteProductLocation, isLoading, error } =
+		useDeleteProductLocation();
 	async function handleDelete() {
-		await removeProductFromRegister(product_barcode, register);
+		await deleteProductLocation(product_barcode, location);
 		notifications.show({
 			title: "Success!",
 			message: "Expiration successfully removed",
@@ -128,14 +133,27 @@ const RegisterItem: FC<{
 		});
 		onDelete();
 	}
+
+	const regOff = getRegisterOffsetFromLocation(location);
+
 	return (
 		<Paper withBorder p="xs" w={180}>
 			<Stack align="center">
-				<RegisterMap
-					height={150}
-					register={register}
-					selectedOffset={register_offset}
-				/>
+				{regOff && (
+					<RegisterMap
+						height={150}
+						register={regOff[0]}
+						selectedShelf={location}
+					/>
+				)}
+				<Stack gap={0} align="center">
+					<span>{location}</span>
+					<span>
+						{lastUpdate
+							? `Checked ${sAgo(new Date(lastUpdate))}`
+							: "Never checked"}
+					</span>
+				</Stack>
 				<LoadingButton
 					isLoading={isLoading}
 					error={error?.message}
@@ -150,9 +168,10 @@ const RegisterItem: FC<{
 };
 
 const ExpirationItem: FC<{
-	expirationItem: Item;
+	expirationItem: Expiration;
+	location: string;
 	onDelete?: () => void;
-}> = ({ expirationItem, onDelete = () => { } }) => {
+}> = ({ expirationItem, location, onDelete = () => { } }) => {
 	const expiration = new Date(expirationItem.expires_at);
 	const { isLoading, error, deleteExpiration } = useDeleteExpiration();
 
@@ -165,7 +184,7 @@ const ExpirationItem: FC<{
 		});
 		onDelete();
 	}
-	const register = getRegisterOffsetFromLocation(expirationItem.location);
+	const register = getRegisterOffsetFromLocation(location);
 	return (
 		<Paper withBorder p="xs" w="100%">
 			<Flex>
@@ -174,13 +193,13 @@ const ExpirationItem: FC<{
 						<RegisterMap
 							height={150}
 							register={register[0]}
-							selectedShelf={expirationItem.location}
+							selectedShelf={location}
 						/>
 					</div>
 				)}
 				<Stack>
 					<Group>
-						Location: {expirationItem.location}
+						Location: {location}
 						<Text c="dimmed">{expirationItem.id}</Text>
 					</Group>
 					<Group gap={8}>
