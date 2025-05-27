@@ -177,9 +177,16 @@ export const ShowProductCard: FC<{
 		});
 		const { createExpiration, isLoading, error } = useCreateExpiration();
 
-		async function handleSubmit({ expirationDate }: { expirationDate: string }) {
+		async function handleSubmit({
+			expirationDate: expirationDateString,
+		}: {
+			expirationDate: string;
+		}) {
+			const expirationDate = new Date(expirationDateString);
 			await createExpiration({
-				expires_at: new Date(expirationDate).getTime(),
+				expires_at:
+					expirationDate.getTime() +
+					expirationDate.getTimezoneOffset() * 60 * 1000,
 				location,
 				product_barcode: product.barcode,
 			});

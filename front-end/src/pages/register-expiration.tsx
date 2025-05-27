@@ -63,9 +63,16 @@ export function RegisterExpirationPage() {
 	} = useCreateExpiration();
 
 	async function handleSubmit(value: Data) {
-		const { selectedShelf, productUpc, expirationDate } = value;
+		const {
+			selectedShelf,
+			productUpc,
+			expirationDate: expirationDateString,
+		} = value;
+		const expirationDate = new Date(expirationDateString);
 		await createExpiration({
-			expires_at: new Date(expirationDate).getTime(),
+			expires_at:
+				expirationDate.getTime() +
+				expirationDate.getTimezoneOffset() * 60 * 1000,
 			location: selectedShelf,
 			product_barcode: productUpc,
 		});
